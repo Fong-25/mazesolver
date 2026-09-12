@@ -18,6 +18,7 @@ namespace Board {
     // UI
     constexpr uint8_t PIN_BUTTON = 8;
     constexpr uint8_t PIN_RGB = 11;
+    constexpr uint8_t RGB_LED_COUNT = 1;
 
     // ToF XSHUT
     constexpr uint8_t PIN_TOF_XSHUT_1 = 12;

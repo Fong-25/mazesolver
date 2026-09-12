@@ -6,7 +6,8 @@ Micromouse robot described by the hardware description used to build the PCB.
 
 It intentionally includes the hardware information that firmware developers
 need, so this file can be given to another programmer without requiring the
-separate hardware-description document.
+separate hardware-description document. After the firmware is completed, another
+document on configuring / tuning is required.
 
 ---
 
