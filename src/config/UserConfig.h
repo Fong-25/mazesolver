@@ -1,0 +1,26 @@
+#pragma once
+#include <Arduino.h>
+
+// USER RELATED CONFIGURATION
+namespace UserConfig {
+    // BUTTON
+    constexpr uint8_t BUTTON_LONG_PRESS_MS = 3000;  // 3 second
+    constexpr uint8_t BUTTON_DEBOUNCE_MS = 30;  // TODO: Confirm feel on real SW
+
+    // STANDBY BLINK INDICATION
+    // TODO: confirm desired rate
+    constexpr uint32_t STANDBY_BLINK_INTERVAL_MS = 500;
+
+    // RGB COLOR (placeholder — define per mode once ModeManager
+    // exists)
+    // TODO: assign real colors per state (SETTING / LOCK / STANDBY / RUN /
+    // ERROR)
+
+    // MAZE GOAL
+    // TODO: goal cell coordinates depend on maze size convention
+
+    // -------- Exploration / fast-run behavior --------
+    // TODO: exploration speed cap, fast-run speed, sensor-covered-start
+    // threshold — these depend on RobotConfig motion limits above, fill in once
+    // MotorControl exists
+}
