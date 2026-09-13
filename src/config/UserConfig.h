@@ -15,6 +15,8 @@ namespace UserConfig {
     constexpr uint32_t BATTERY_SAMPLE_INTERVAL_MS = 500;
     constexpr uint32_t DIP_DEBOUNCE_MS = 30;
 
+    // TOF
+    constexpr uint32_t TOF_POLL_INTERVAL_MS = 20;
     // RGB COLOR (placeholder — define per mode once ModeManager
     // exists)
     // TODO: assign real colors per state (SETTING / LOCK / STANDBY / RUN /

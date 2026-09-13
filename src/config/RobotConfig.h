@@ -14,6 +14,14 @@ namespace RobotConfig {
     constexpr float WHEEL_BASE_MM = 72.0f;      // TODO: confirm
     constexpr float WHEEL_TRACK_MM = 72.0f;     // TODO: confirm
 
+    // TOF
+    constexpr uint8_t TOF_INSTALLED_COUNT = 4;
+
+    constexpr uint8_t TOF_ROLE_INDEX_FRONT = 0;
+    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_LEFT = 1;
+    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_RIGHT = 2;
+    constexpr uint8_t TOF_ROLE_INDEX_AUXILIARY = 3;
+
     // ENCODER
     // TODO: confirm gearbox ratio × CPR
     constexpr float ENCODER_PULSES_PER_OUTPUT_REV = 350.0f;
