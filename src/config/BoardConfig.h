@@ -30,6 +30,10 @@ namespace Board {
     constexpr uint8_t PIN_SETTING_SWITCH = A3;  // 2-bit DIP
     // BATTERY
     constexpr uint8_t PIN_BATTERY_ADC = A7;
+    constexpr float BATTERY_DIVIDER_R1_OHM = 10000.0f;
+    constexpr float BATTERY_DIVIDER_R2_OHM = 6800.0f;
+    constexpr float ADC_REFERENCE_V = 5.0f;
+    constexpr uint16_t ADC_MAX_COUNTS = 1023;
 
     // SHARED I2C BUS
     constexpr uint8_t PIN_I2C_SDA = A4;

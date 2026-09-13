@@ -11,6 +11,10 @@ namespace UserConfig {
     // TODO: confirm desired rate
     constexpr uint32_t STANDBY_BLINK_INTERVAL_MS = 500;
 
+    // BATTERY
+    constexpr uint32_t BATTERY_SAMPLE_INTERVAL_MS = 500;
+    constexpr uint32_t DIP_DEBOUNCE_MS = 30;
+
     // RGB COLOR (placeholder — define per mode once ModeManager
     // exists)
     // TODO: assign real colors per state (SETTING / LOCK / STANDBY / RUN /

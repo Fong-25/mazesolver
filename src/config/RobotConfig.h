@@ -25,4 +25,10 @@ namespace RobotConfig {
     constexpr float MAX_LINEAR_SPEED_MM_S = 800.0f;
     constexpr float MAX_LINEAR_ACCEL_MM_S2 = 1500.0f;
     constexpr float MAX_TURN_RATE_DEG_S = 500.0f;
+
+    // BATTERY
+    // TODO: confirm for 2S pack
+    constexpr float BATTERY_LOW_VOLTAGE = 7.0f;
+    constexpr float BATTERY_CRITICAL_VOLTAGE = 6.6f;  // TODO: confirm
+    constexpr float BATTERY_FILTER_ALPHA = 0.1f;  // exponential filter weight
 }
