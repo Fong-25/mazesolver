@@ -84,12 +84,5 @@
   false-positives during normal hard acceleration.
 
 ## Open questions — sensor layout
-- **RESOLVED**: 4 ToF sensors — 2 straight-ahead-facing (front-left,
-  front-right, both parallel forward), 1 diagonal-front-left, 1
-  diagonal-front-right. No AUXILIARY/rear sensor.
-- **Action needed** (deferred until after MotorDriver, per plan): rename
-  `ToFManager::SensorRole` from {FRONT, DIAGONAL_LEFT, DIAGONAL_RIGHT,
-  AUXILIARY} to {FRONT_LEFT, FRONT_RIGHT, DIAGONAL_LEFT, DIAGONAL_RIGHT}.
-  Single-place change: the enum in ToFManager.h + the 4
-  `RobotConfig::TOF_ROLE_INDEX_*` constants. No other code touches roles
-  yet, so this is contained.
+- ~~RESOLVED, FIXED~~: ToF roles are FRONT_LEFT, FRONT_RIGHT,
+  DIAGONAL_LEFT, DIAGONAL_RIGHT — done as of MotorDriver checkpoint.

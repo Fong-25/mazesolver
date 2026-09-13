@@ -22,10 +22,10 @@ namespace RobotConfig {
     // TOF
     constexpr uint8_t TOF_INSTALLED_COUNT = 4;
 
-    constexpr uint8_t TOF_ROLE_INDEX_FRONT = 0;
-    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_LEFT = 1;
-    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_RIGHT = 2;
-    constexpr uint8_t TOF_ROLE_INDEX_AUXILIARY = 3;
+    constexpr uint8_t TOF_ROLE_INDEX_FRONT_LEFT = 0;
+    constexpr uint8_t TOF_ROLE_INDEX_FRONT_RIGHT = 1;
+    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_LEFT = 2;
+    constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_RIGHT = 3;
 
     // IMU
     enum class ImuAxis : uint8_t { X, Y, Z };

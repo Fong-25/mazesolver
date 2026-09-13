@@ -3,10 +3,10 @@
 
 namespace ToFManager {
     enum class SensorRole : uint8_t {
-        FRONT,
+        FRONT_LEFT,
+        FRONT_RIGHT,
         DIAGONAL_LEFT,
         DIAGONAL_RIGHT,
-        AUXILIARY,
         ROLE_COUNT
     };
 

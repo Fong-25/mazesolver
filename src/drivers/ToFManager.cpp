@@ -29,14 +29,14 @@ namespace {
 
     uint8_t roleToIndex(ToFManager::SensorRole role) {
         switch (role) {
-            case ToFManager::SensorRole::FRONT:
-                return RobotConfig::TOF_ROLE_INDEX_FRONT;
+            case ToFManager::SensorRole::FRONT_LEFT:
+                return RobotConfig::TOF_ROLE_INDEX_FRONT_LEFT;
+            case ToFManager::SensorRole::FRONT_RIGHT:
+                return RobotConfig::TOF_ROLE_INDEX_FRONT_RIGHT;
             case ToFManager::SensorRole::DIAGONAL_LEFT:
                 return RobotConfig::TOF_ROLE_INDEX_DIAGONAL_LEFT;
             case ToFManager::SensorRole::DIAGONAL_RIGHT:
                 return RobotConfig::TOF_ROLE_INDEX_DIAGONAL_RIGHT;
-            case ToFManager::SensorRole::AUXILIARY:
-                return RobotConfig::TOF_ROLE_INDEX_AUXILIARY;
             default:
                 return 0xFF;
         }
