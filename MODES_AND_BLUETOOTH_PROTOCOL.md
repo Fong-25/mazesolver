@@ -16,6 +16,23 @@ state-machine layer needed. Both inherit DIAGNOSTIC's existing rule from
 spec section 62: **no autonomous maze motion, motors only move during an
 explicit, requested action.**
 
+## Mode 2 — DIAGNOSTIC (now with concrete commands)
+
+Purpose: isolated hardware bring-up/testing. Motors only move on an
+explicit command, never autonomously.
+
+| Command       | Action |
+|---------------|--------|
+| `MOTOR L <pwm>` | Set left motor to raw PWM, -255 to 255 (sign = direction) |
+| `MOTOR R <pwm>` | Set right motor to raw PWM, -255 to 255 |
+| `MOTOR BRAKE`   | Active brake both motors |
+| `MOTOR STOP`    | Coast both motors (also reachable via the global `STOP`) |
+| `LOG <channel>` | Same streaming channels as DEBUG_LOG (E/M/I/B/T/A/OFF) — available here too, since motor-polarity bring-up needs to drive AND watch encoders simultaneously |
+
+**This is the procedure `SETUP_NOTES.md` section B refers to**: enter
+DIAGNOSTIC, run `LOG E`, then `MOTOR L 100` — watch the terminal to confirm
+direction and encoder sign together in real time.
+
 ## Mode 3 — DEBUG_LOG
 
 Purpose: stream requested telemetry channels over Bluetooth. Tuning/config

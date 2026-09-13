@@ -14,6 +14,7 @@ namespace Board {
     constexpr uint8_t PIN_LEFT_IN2 = 5;    // AIN2
     constexpr uint8_t PIN_RIGHT_IN1 = 9;   // BIN1
     constexpr uint8_t PIN_RIGHT_IN2 = 10;  // BIN2
+    constexpr int16_t PWM_MAX = 255;       // 8-bit analogWrite hardware ceiling
 
     // UI
     constexpr uint8_t PIN_BUTTON = 8;
