@@ -2,12 +2,17 @@
 
 // OTHER HARDWARE RELATED
 namespace RobotConfig {
-    // MOTOR & ENCODER POLARITY
-    constexpr bool LEFT_MOTOR_REVERSE = false;
-    constexpr bool RIGHT_MOTOR_REVERSE = false;
+    // MOTOR & ENCODER
+    constexpr bool LEFT_MOTOR_REVERSED = false;
+    constexpr bool RIGHT_MOTOR_REVERSED = false;
 
-    constexpr bool LEFT_ENCODER_REVERSE = false;
-    constexpr bool RIGHT_ENCODER_REVERSE = false;
+    constexpr bool LEFT_ENCODER_REVERSED = false;
+    constexpr bool RIGHT_ENCODER_REVERSED = false;
+
+    // How much headroom before a measured speed is treated as a sensor glitch
+    // rather than a real (if aggressive) motion. 1.5x max speed is generous —
+    // tighten it only if you see false positives during hard runs.
+    constexpr float ENCODER_GLITCH_SAFETY_MARGIN = 1.5f;
 
     // MECHANICAL GEOMETRY
     constexpr float WHEEL_DIAMETER_MM = 34.0f;  // TODO: confirm
