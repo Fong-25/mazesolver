@@ -22,6 +22,13 @@ namespace RobotConfig {
     constexpr uint8_t TOF_ROLE_INDEX_DIAGONAL_RIGHT = 2;
     constexpr uint8_t TOF_ROLE_INDEX_AUXILIARY = 3;
 
+    // IMU
+    enum class ImuAxis : uint8_t { X, Y, Z };
+    // Verify against the assembled robot — flip AXIS or SIGN, don't touch
+    // IMU.cpp.
+    constexpr ImuAxis IMU_YAW_AXIS = ImuAxis::Z;
+    constexpr int8_t IMU_YAW_SIGN = +1;
+
     // ENCODER
     // TODO: confirm gearbox ratio × CPR
     constexpr float ENCODER_PULSES_PER_OUTPUT_REV = 350.0f;

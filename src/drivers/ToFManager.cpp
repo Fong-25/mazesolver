@@ -61,8 +61,8 @@ namespace {
 
 namespace ToFManager {
     bool begin() {
-        Wire.begin();
-        // NOTE: once IMU is added on the same bus, Wire.begin() must only be
+        // Wire.begin();
+        // IMU is added on the same bus, Wire.begin() must only be
         // called ONCE for the whole firmware. Move this call up to main
         // setup() at that point — don't leave two drivers both owning it.
         Wire.setClock(SensorConfig::I2C_CLOCK_HZ);
