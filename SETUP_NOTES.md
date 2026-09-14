@@ -1,5 +1,29 @@
 # Setup / Tuning / Hardware Notes
 
+## Critical — must be first lines of main.cpp's setup()
+```cpp
+MCUSR = 0;
+wdt_disable();
+```
+Skipping this is a known AVR/Optiboot footgun: if the watchdog trips once,
+it can stay armed across reset and interfere with the next firmware
+upload, looking like a bricked board. Must run before anything else,
+including Serial/driver init.
+
+## Correct watchdog kick pattern (for when main.cpp is assembled)
+```cpp
+Safety::update(now);
+if (!Safety::isTripped())
+{
+    Safety::kickWatchdog();
+}
+```
+Never kick unconditionally — that defeats the entire point of the watchdog.
+
+## To verify once hardware exists
+- `Safety`'s `WDTO_500MS` — generous starting guess, not measured. Tighten
+  once real loop timing is profiled (see CONTROL_PERIOD_US note above).
+
 ## A. One-time physical measurements (measure once with tools, rarely revisit)
 - `RobotConfig::WHEEL_DIAMETER_MM`, `WHEEL_BASE_MM`, `WHEEL_TRACK_MM`
   — Calipers/ruler on the assembled robot.
