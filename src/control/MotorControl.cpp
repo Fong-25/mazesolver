@@ -23,8 +23,11 @@ namespace {
                  ControlConfig::WHEEL_PID_INTEGRAL_LIMIT,
                  ControlConfig::WHEEL_PID_DERIVATIVE_FILTER_ALPHA);
 
-    const float MM_PER_COUNT = (PI * RobotConfig::WHEEL_DIAMETER_MM) /
-                               RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+    const float MM_PER_COUNT_LEFT = (PI * RobotConfig::LEFT_WHEEL_DIAMETER_MM) /
+                                    RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+    const float MM_PER_COUNT_RIGHT =
+        (PI * RobotConfig::RIGHT_WHEEL_DIAMETER_MM) /
+        RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
 
     float targetLeftMmS = 0.0f, targetRightMmS = 0.0f;
     float measuredLeftMmS = 0.0f, measuredRightMmS = 0.0f;
@@ -83,8 +86,8 @@ namespace MotorControl {
         lastLeftCount = leftCount;
         lastRightCount = rightCount;
 
-        measuredLeftMmS = (leftDelta * MM_PER_COUNT) / dtSec;
-        measuredRightMmS = (rightDelta * MM_PER_COUNT) / dtSec;
+        measuredLeftMmS = (leftDelta * MM_PER_COUNT_LEFT) / dtSec;
+        measuredRightMmS = (rightDelta * MM_PER_COUNT_RIGHT) / dtSec;
 
         if (!enabled) {
             lastLeftPwm = lastRightPwm = 0;

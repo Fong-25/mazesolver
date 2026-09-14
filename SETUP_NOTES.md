@@ -50,11 +50,39 @@
   encoder/IMU mismatch) as the ceiling.
 
 ## D. Bench calibration against a known reference
+- `RobotConfig::LEFT_WHEEL_DIAMETER_MM` / `RIGHT_WHEEL_DIAMETER_MM`
+  — Measure EACH wheel independently with calipers. Don't assume they match
+  — a 1-2% difference between them is real and normal; that's exactly why
+  these are two separate constants now instead of one.
 - `RobotConfig::ENCODER_PULSES_PER_OUTPUT_REV`
-  — Ground truth beats datasheet math: rotate the output wheel by hand
-  exactly one full turn, read the raw count via `LOG E`, divide by 4
-  (quadrature). Compare against the datasheet's 350/rev as a sanity check,
-  but trust the physical measurement if they disagree.
+  — One shared value (see rationale in RobotConfig.h). Ground-truth method
+  unchanged: rotate the output wheel by hand exactly one turn, read raw
+  count via `LOG E`, divide by 4.
+  ## Critical: cross-check encoder calibration against the IMU before trusting odometry
+
+A wrong `ENCODER_PULSES_PER_OUTPUT_REV` or `WHEEL_BASE_MM` doesn't cause an
+obviously broken robot — it causes a robot that drives "fine" but reports
+the wrong position/heading to itself, which only shows up as mysterious
+maze-solving errors much later. Catch it here instead:
+
+1. Put the robot in DIAGNOSTIC mode, run `LOG P` (pose) and `LOG I` (IMU)
+   together.
+2. Run `TEST TURN180` (encoder-driven in-place 180° turn) from
+   MOTION_TEST — this uses ONLY encoder-derived `dTheta`, no IMU input.
+3. Compare `PoseEstimator::getThetaDeg()`'s final value against
+   `IMU::getYawDeg()`'s final value over the exact same maneuver.
+4. If they agree within a couple degrees: encoder calibration
+   (`ENCODER_PULSES_PER_OUTPUT_REV` + `WHEEL_BASE_MM`) is trustworthy.
+5. If they disagree significantly: the error is systematic, not noise —
+   check `WHEEL_BASE_MM` first (easiest to mismeasure), then
+   `ENCODER_PULSES_PER_OUTPUT_REV` (re-verify with the ground-truth method
+   above, don't just trust the datasheet number).
+
+This is NOT full sensor fusion (that's still deferred, per spec section 38)
+— it's a one-time bring-up check that uses the IMU as an independent
+reference to validate the encoder math, which is a much smaller and more
+immediately valuable step than fusion.
+
 - `SensorConfig::TOF_MIN_VALID_MM/TOF_MAX_VALID_MM`,
   `FRONT_WALL_MM`/`SIDE_WALL_MAX_MM`
   — Place a flat object at a known measured distance, compare against

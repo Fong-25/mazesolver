@@ -28,6 +28,7 @@ explicit command, never autonomously.
 | `MOTOR BRAKE`   | Active brake both motors |
 | `MOTOR STOP`    | Coast both motors (also reachable via the global `STOP`) |
 | `LOG <channel>` | Same streaming channels as DEBUG_LOG (E/M/I/B/T/A/OFF) — available here too, since motor-polarity bring-up needs to drive AND watch encoders simultaneously |
+| `LOG P`   | Pose (x, y, theta) from PoseEstimator |
 
 **This is the procedure `SETUP_NOTES.md` section B refers to**: enter
 DIAGNOSTIC, run `LOG E`, then `MOTOR L 100` — watch the terminal to confirm

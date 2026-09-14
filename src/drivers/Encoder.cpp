@@ -88,11 +88,13 @@ namespace Encoder {
         lastLeftForCheck = l;
         lastRightForCheck = r;
 
-        float mmPerCount = (PI * RobotConfig::WHEEL_DIAMETER_MM) /
-                           RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+        float leftMmPerCount = (PI * RobotConfig::LEFT_WHEEL_DIAMETER_MM) /
+                               RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+        float rightMmPerCount = (PI * RobotConfig::RIGHT_WHEEL_DIAMETER_MM) /
+                                RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
         float dtSec = dt / 1000.0f;
-        float leftSpeedMmS = (leftDelta * mmPerCount) / dtSec;
-        float rightSpeedMmS = (rightDelta * mmPerCount) / dtSec;
+        float leftSpeedMmS = (leftDelta * leftMmPerCount) / dtSec;
+        float rightSpeedMmS = (rightDelta * rightMmPerCount) / dtSec;
 
         float limit = RobotConfig::MAX_LINEAR_SPEED_MM_S *
                       RobotConfig::ENCODER_GLITCH_SAFETY_MARGIN;

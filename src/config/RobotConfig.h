@@ -15,9 +15,13 @@ namespace RobotConfig {
     constexpr float ENCODER_GLITCH_SAFETY_MARGIN = 1.5f;
 
     // MECHANICAL GEOMETRY
-    constexpr float WHEEL_DIAMETER_MM = 34.0f;  // TODO: confirm
-    constexpr float WHEEL_BASE_MM = 72.0f;      // TODO: confirm
-    constexpr float WHEEL_TRACK_MM = 72.0f;     // TODO: confirm
+    constexpr float LEFT_WHEEL_DIAMETER_MM =
+        34.0f;  // TODO: measure independently
+    constexpr float RIGHT_WHEEL_DIAMETER_MM =
+        34.0f;  // TODO: measure independently
+
+    constexpr float WHEEL_BASE_MM = 72.0f;   // TODO: confirm
+    constexpr float WHEEL_TRACK_MM = 72.0f;  // TODO: confirm
 
     // TOF
     constexpr uint8_t TOF_INSTALLED_COUNT = 4;
