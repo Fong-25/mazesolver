@@ -32,4 +32,6 @@ namespace ControlConfig {
     constexpr float WALL_KP = 1.0f;
     constexpr float WALL_KI = 0.0f;
     constexpr float WALL_KD = 0.0f;
-}
+
+    constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
+    constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms

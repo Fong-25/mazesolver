@@ -43,6 +43,11 @@
 - `ControlConfig::WALL_KP/KI/KD`
   — Same method, but needs the physical maze/walls to test against (ToF
   involved) — defer until ToF wall-following logic exists.
+- `ControlConfig::CONTROL_PERIOD_US`, `IMU_PERIOD_US`
+  — Starting values within spec's recommended ranges, not yet profiled.
+  Once on hardware: check actual loop timing (e.g. toggle a spare pin at
+  loop start/end, scope it) to confirm the ATmega328P isn't falling behind
+  at these rates once ToF/IMU/Bluetooth are all active together.
 - `RobotConfig::MAX_LINEAR_SPEED_MM_S`, `MAX_LINEAR_ACCEL_MM_S2`,
   `MAX_TURN_RATE_DEG_S`
   — Start at the conservative defaults already set. Raise gradually using
