@@ -28,6 +28,12 @@ void PID::reset() {
     hasLastMeasurement_ = false;
 }
 
+void PID::getGains(float& kp, float& ki, float& kd) const {
+    kp = kp_;
+    ki = ki_;
+    kd = kd_;
+}
+
 float PID::update(float target, float measurement, float dt) {
     if (!enabled_ || dt <= 0.0f) {
         return 0.0f;

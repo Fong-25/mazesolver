@@ -35,3 +35,4 @@ namespace ControlConfig {
 
     constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
     constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms
+}

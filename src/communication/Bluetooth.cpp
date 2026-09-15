@@ -1,0 +1,361 @@
+#include "Bluetooth.h"
+
+#include <ctype.h>
+#include <string.h>
+
+#include "../config/UserConfig.h"
+#include "../control/MotorControl.h"
+#include "../control/PoseEstimator.h"
+#include "../drivers/BatteryMonitor.h"
+#include "../drivers/Encoder.h"
+#include "../drivers/IMU.h"
+#include "../drivers/MotorDriver.h"
+#include "../drivers/ToFManager.h"
+#include "../system/Diagnostics.h"
+#include "../system/Safety.h"
+
+namespace {
+    constexpr uint8_t LINE_BUFFER_SIZE = 64;
+    char lineBuffer[LINE_BUFFER_SIZE];
+    uint8_t lineLength = 0;
+
+    constexpr uint8_t LOG_ENCODER = 1 << 0;
+    constexpr uint8_t LOG_MOTOR = 1 << 1;
+    constexpr uint8_t LOG_IMU = 1 << 2;
+    constexpr uint8_t LOG_BATTERY = 1 << 3;
+    constexpr uint8_t LOG_TOF = 1 << 4;
+    constexpr uint8_t LOG_POSE = 1 << 5;
+
+    uint8_t logMask = 0;
+    uint32_t lastLogMs = 0;
+
+    bool hasPendingMode = false;
+    uint8_t pendingModeIndex = 0;
+
+    bool hasPendingTest = false;
+    char pendingTestName[8] = {0};
+
+    void printToF() {
+        Serial.print(F("SENSOR FL="));
+        Serial.print(
+            ToFManager::getDistanceMm(ToFManager::SensorRole::FRONT_LEFT));
+        Serial.print(F(" FR="));
+        Serial.print(
+            ToFManager::getDistanceMm(ToFManager::SensorRole::FRONT_RIGHT));
+        Serial.print(F(" DL="));
+        Serial.print(
+            ToFManager::getDistanceMm(ToFManager::SensorRole::DIAGONAL_LEFT));
+        Serial.print(F(" DR="));
+        Serial.println(
+            ToFManager::getDistanceMm(ToFManager::SensorRole::DIAGONAL_RIGHT));
+    }
+
+    void printPidGains() {
+        float kp, ki, kd;
+        MotorControl::getLeftGains(kp, ki, kd);
+        Serial.print(F("PID L kp="));
+        Serial.print(kp);
+        Serial.print(F(" ki="));
+        Serial.print(ki);
+        Serial.print(F(" kd="));
+        Serial.println(kd);
+
+        MotorControl::getRightGains(kp, ki, kd);
+        Serial.print(F("PID R kp="));
+        Serial.print(kp);
+        Serial.print(F(" ki="));
+        Serial.print(ki);
+        Serial.print(F(" kd="));
+        Serial.println(kd);
+    }
+
+    void printStatus() {
+        Serial.print(F("STATUS bat="));
+        Serial.print(BatteryMonitor::getVoltage());
+        Serial.print(F(" tripped="));
+        Serial.print(Safety::isTripped() ? 1 : 0);
+        Serial.print(F(" err="));
+        Serial.print((uint8_t)Diagnostics::getError());
+        Serial.print(F(" spdL="));
+        Serial.print(MotorControl::getMeasuredLeftSpeedMmS());
+        Serial.print(F(" spdR="));
+        Serial.print(MotorControl::getMeasuredRightSpeedMmS());
+        Serial.print(F(" x="));
+        Serial.print(PoseEstimator::getXMm());
+        Serial.print(F(" y="));
+        Serial.print(PoseEstimator::getYMm());
+        Serial.print(F(" th="));
+        Serial.println(PoseEstimator::getThetaDeg());
+    }
+
+    void handleMotorCommand(char* rest) {
+        char* savePtr = nullptr;
+        char* sub = strtok_r(rest, " ", &savePtr);
+        if (sub == nullptr) {
+            Serial.println(F("ERR MOTOR needs L/R/BRAKE/STOP"));
+            return;
+        }
+
+        if (strcasecmp(sub, "BRAKE") == 0) {
+            MotorDriver::brakeLeft();
+            MotorDriver::brakeRight();
+            Serial.println(F("MOTOR BRAKE"));
+        } else if (strcasecmp(sub, "STOP") == 0) {
+            MotorDriver::stopAll();
+            Serial.println(F("MOTOR STOP"));
+        } else if (strcasecmp(sub, "L") == 0 || strcasecmp(sub, "R") == 0) {
+            char* valStr = strtok_r(nullptr, " ", &savePtr);
+            if (valStr == nullptr) {
+                Serial.println(F("ERR MOTOR needs a PWM value"));
+                return;
+            }
+            int16_t pwm = (int16_t)atoi(
+                valStr);  // MotorDriver clamps out-of-range internally
+            if (strcasecmp(sub, "L") == 0)
+                MotorDriver::setLeftPWM(pwm);
+            else
+                MotorDriver::setRightPWM(pwm);
+            Serial.print(F("MOTOR "));
+            Serial.print(sub);
+            Serial.print(F(" = "));
+            Serial.println(pwm);
+        } else {
+            Serial.println(F("ERR unknown MOTOR subcommand"));
+        }
+    }
+
+    void handlePidCommand(char* rest) {
+        char* savePtr = nullptr;
+        char* side = strtok_r(rest, " ", &savePtr);
+
+        if (side == nullptr) {
+            printPidGains();
+            return;
+        }
+
+        char* kpStr = strtok_r(nullptr, " ", &savePtr);
+        char* kiStr = strtok_r(nullptr, " ", &savePtr);
+        char* kdStr = strtok_r(nullptr, " ", &savePtr);
+
+        if (kpStr == nullptr || kiStr == nullptr || kdStr == nullptr) {
+            Serial.println(F("ERR PID needs: PID <L|R> <kp> <ki> <kd>"));
+            return;
+        }
+
+        float kp = atof(kpStr), ki = atof(kiStr), kd = atof(kdStr);
+
+        if (strcasecmp(side, "L") == 0) {
+            MotorControl::setLeftGains(kp, ki, kd);
+            Serial.println(F("PID L updated"));
+        } else if (strcasecmp(side, "R") == 0) {
+            MotorControl::setRightGains(kp, ki, kd);
+            Serial.println(F("PID R updated"));
+        } else
+            Serial.println(F("ERR PID side must be L or R"));
+    }
+
+    void handleLogCommand(char* rest) {
+        char* savePtr = nullptr;
+        char* channel = strtok_r(rest, " ", &savePtr);
+        if (channel == nullptr) {
+            Serial.println(F("ERR LOG needs a channel (E/M/I/B/T/P/A/OFF)"));
+            return;
+        }
+
+        if (strcasecmp(channel, "OFF") == 0) {
+            logMask = 0;
+            Serial.println(F("LOG OFF"));
+            return;
+        }
+        if (strcasecmp(channel, "A") == 0) {
+            logMask = 0x3F;
+            Serial.println(F("LOG ALL"));
+            return;
+        }
+
+        uint8_t bit = 0;
+        switch (toupper(channel[0])) {
+            case 'E':
+                bit = LOG_ENCODER;
+                break;
+            case 'M':
+                bit = LOG_MOTOR;
+                break;
+            case 'I':
+                bit = LOG_IMU;
+                break;
+            case 'B':
+                bit = LOG_BATTERY;
+                break;
+            case 'T':
+                bit = LOG_TOF;
+                break;
+            case 'P':
+                bit = LOG_POSE;
+                break;
+            default:
+                Serial.println(F("ERR unknown LOG channel"));
+                return;
+        }
+
+        logMask ^=
+            bit;  // toggle: sending the same channel again turns it back off
+        Serial.print(F("LOG mask = 0x"));
+        Serial.println(logMask, HEX);
+    }
+
+    void handleModeCommand(char* rest) {
+        char* savePtr = nullptr;
+        char* numStr = strtok_r(rest, " ", &savePtr);
+        if (numStr == nullptr) {
+            Serial.println(F("ERR MODE needs a number"));
+            return;
+        }
+
+        pendingModeIndex = (uint8_t)atoi(numStr);
+        hasPendingMode = true;
+        Serial.print(F("MODE request queued: "));
+        Serial.println(pendingModeIndex);
+    }
+
+    void handleTestCommand(char* rest) {
+        if (rest == nullptr || rest[0] == '\0') {
+            Serial.println(
+                F("ERR TEST needs a name "
+                  "(ACCEL/CRUISE/DECEL/TURNL/TURNR/TURN180/ALL)"));
+            return;
+        }
+        strncpy(pendingTestName, rest, sizeof(pendingTestName) - 1);
+        pendingTestName[sizeof(pendingTestName) - 1] = '\0';
+        hasPendingTest = true;
+        Serial.print(F("TEST request queued: "));
+        Serial.println(pendingTestName);
+    }
+
+    void handleLine(char* line) {
+        char* savePtr = nullptr;
+        char* cmd = strtok_r(line, " ", &savePtr);
+        if (cmd == nullptr) return;
+
+        if (strcasecmp(cmd, "PING") == 0)
+            Serial.println(F("PONG"));
+        else if (strcasecmp(cmd, "STATUS") == 0)
+            printStatus();
+        else if (strcasecmp(cmd, "STOP") == 0) {
+            Safety::triggerUserAbort();
+            Serial.println(F("STOPPED"));
+        } else if (strcasecmp(cmd, "MOTOR") == 0)
+            handleMotorCommand(savePtr);
+        else if (strcasecmp(cmd, "ENC") == 0) {
+            Serial.print(F("ENC L="));
+            Serial.print(Encoder::LEFT_ENCODER_COUNT());
+            Serial.print(F(" R="));
+            Serial.println(Encoder::RIGHT_ENCODER_COUNT());
+        } else if (strcasecmp(cmd, "SENSOR") == 0)
+            printToF();
+        else if (strcasecmp(cmd, "IMU") == 0) {
+            Serial.print(F("IMU rate="));
+            Serial.print(IMU::getYawRateDegPerSec());
+            Serial.print(F(" yaw="));
+            Serial.println(IMU::getYawDeg());
+        } else if (strcasecmp(cmd, "BAT") == 0) {
+            Serial.print(F("BAT "));
+            Serial.println(BatteryMonitor::getVoltage());
+        } else if (strcasecmp(cmd, "PID") == 0)
+            handlePidCommand(savePtr);
+        else if (strcasecmp(cmd, "LOG") == 0)
+            handleLogCommand(savePtr);
+        else if (strcasecmp(cmd, "MODE") == 0)
+            handleModeCommand(savePtr);
+        else if (strcasecmp(cmd, "TEST") == 0)
+            handleTestCommand(savePtr);
+        else if (strcasecmp(cmd, "MAP") == 0)
+            Serial.println(F("MAP: not yet implemented (Navigation pending)"));
+        else
+            Serial.println(F("ERR unknown command"));
+    }
+
+    void serviceLogStream(uint32_t nowMs) {
+        if (logMask == 0) return;
+        if ((nowMs - lastLogMs) < UserConfig::LOG_STREAM_INTERVAL_MS) return;
+        lastLogMs = nowMs;
+
+        if (logMask & LOG_ENCODER) {
+            Serial.print(F("E L="));
+            Serial.print(Encoder::LEFT_ENCODER_COUNT());
+            Serial.print(F(" R="));
+            Serial.println(Encoder::RIGHT_ENCODER_COUNT());
+        }
+        if (logMask & LOG_MOTOR) {
+            Serial.print(F("M L="));
+            Serial.print(MotorControl::getLastLeftPwm());
+            Serial.print(F(" R="));
+            Serial.println(MotorControl::getLastRightPwm());
+        }
+        if (logMask & LOG_IMU) {
+            Serial.print(F("I rate="));
+            Serial.print(IMU::getYawRateDegPerSec());
+            Serial.print(F(" yaw="));
+            Serial.println(IMU::getYawDeg());
+        }
+        if (logMask & LOG_BATTERY) {
+            Serial.print(F("B "));
+            Serial.println(BatteryMonitor::getVoltage());
+        }
+        if (logMask & LOG_TOF) printToF();
+        if (logMask & LOG_POSE) {
+            Serial.print(F("P x="));
+            Serial.print(PoseEstimator::getXMm());
+            Serial.print(F(" y="));
+            Serial.print(PoseEstimator::getYMm());
+            Serial.print(F(" th="));
+            Serial.println(PoseEstimator::getThetaDeg());
+        }
+    }
+}
+
+namespace Bluetooth {
+    void begin() {
+        Serial.begin(UserConfig::BLUETOOTH_BAUD);
+        lineLength = 0;
+        logMask = 0;
+        lastLogMs = millis();
+        hasPendingMode = false;
+        hasPendingTest = false;
+    }
+
+    void update() {
+        while (Serial.available() > 0) {
+            char c = (char)Serial.read();
+
+            if (c == '\n' || c == '\r') {
+                if (lineLength > 0) {
+                    lineBuffer[lineLength] = '\0';
+                    handleLine(lineBuffer);
+                    lineLength = 0;
+                }
+            } else if (lineLength < (LINE_BUFFER_SIZE - 1)) {
+                lineBuffer[lineLength++] = c;
+            }
+            // else: silently drop overflow chars — a too-long line just
+            // truncates, never overruns the buffer.
+        }
+
+        serviceLogStream(millis());
+    }
+
+    bool consumeModeRequest(uint8_t& outModeIndex) {
+        if (!hasPendingMode) return false;
+        outModeIndex = pendingModeIndex;
+        hasPendingMode = false;
+        return true;
+    }
+
+    bool consumeTestRequest(char* outBuffer, uint8_t bufferSize) {
+        if (!hasPendingTest) return false;
+        strncpy(outBuffer, pendingTestName, bufferSize - 1);
+        outBuffer[bufferSize - 1] = '\0';
+        hasPendingTest = false;
+        return true;
+    }
+}

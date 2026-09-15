@@ -13,6 +13,11 @@ namespace MotorControl {
     void enable();
     void disable();  // stops motors immediately, resets both PIDs
 
+    void setLeftGains(float kp, float ki, float kd);
+    void setRightGains(float kp, float ki, float kd);
+    void getLeftGains(float& kp, float& ki, float& kd);
+    void getRightGains(float& kp, float& ki, float& kd);
+
     float getMeasuredLeftSpeedMmS();
     float getMeasuredRightSpeedMmS();
 

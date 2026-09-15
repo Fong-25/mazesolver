@@ -17,6 +17,9 @@ namespace UserConfig {
 
     // TOF
     constexpr uint32_t TOF_POLL_INTERVAL_MS = 20;
+
+    constexpr uint32_t BLUETOOTH_BAUD = 115200;
+    constexpr uint32_t LOG_STREAM_INTERVAL_MS = 100;
     // RGB COLOR (placeholder — define per mode once ModeManager
     // exists)
     // TODO: assign real colors per state (SETTING / LOCK / STANDBY / RUN /

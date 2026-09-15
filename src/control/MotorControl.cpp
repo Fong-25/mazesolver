@@ -120,6 +120,19 @@ namespace MotorControl {
         MotorDriver::stopAll();
     }
 
+    void setLeftGains(float kp, float ki, float kd) {
+        leftPid.setGains(kp, ki, kd);
+    }
+    void setRightGains(float kp, float ki, float kd) {
+        rightPid.setGains(kp, ki, kd);
+    }
+    void getLeftGains(float& kp, float& ki, float& kd) {
+        leftPid.getGains(kp, ki, kd);
+    }
+    void getRightGains(float& kp, float& ki, float& kd) {
+        rightPid.getGains(kp, ki, kd);
+    }
+
     float getMeasuredLeftSpeedMmS() { return measuredLeftMmS; }
     float getMeasuredRightSpeedMmS() { return measuredRightMmS; }
     int16_t getLastLeftPwm() { return lastLeftPwm; }

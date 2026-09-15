@@ -10,6 +10,8 @@ class PID {
     void setEnabled(bool enabled);
     void reset();
 
+    void getGains(float& kp, float& ki, float& kd) const;
+
     // dt in seconds. Sign-safe: works identically for negative
     // targets/measurements (reverse motion) since it's plain signed
     // arithmetic throughout, no abs()-clamped shortcuts.
