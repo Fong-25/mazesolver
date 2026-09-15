@@ -25,8 +25,10 @@ Never kick unconditionally — that defeats the entire point of the watchdog.
   once real loop timing is profiled (see CONTROL_PERIOD_US note above).
 
 ## A. One-time physical measurements (measure once with tools, rarely revisit)
-- `RobotConfig::WHEEL_DIAMETER_MM`, `WHEEL_BASE_MM`, `WHEEL_TRACK_MM`
-  — Calipers/ruler on the assembled robot.
+- `RobotConfig::LEFT_WHEEL_DIAMETER_MM`, `RIGHT_WHEEL_DIAMETER_MM`, `WHEEL_BASE_MM`
+  — Calipers/ruler on the assembled robot. Measure the two wheel diameters
+  independently — see the earlier discussion on why they're separate
+  constants now.
 - `BoardConfig::BATTERY_DIVIDER_R1_OHM` / `R2_OHM`
   — Multimeter the *actual* populated resistors (manufacturing tolerance
   means the nominal value on the schematic may be off by a few %). Verify

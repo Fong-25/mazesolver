@@ -4,8 +4,9 @@
 // USER RELATED CONFIGURATION
 namespace UserConfig {
     // BUTTON
-    constexpr uint8_t BUTTON_LONG_PRESS_MS = 3000;  // 3 second
-    constexpr uint8_t BUTTON_DEBOUNCE_MS = 30;  // TODO: Confirm feel on real SW
+    constexpr uint32_t BUTTON_LONG_PRESS_MS = 3000;  // 3 second
+    constexpr uint32_t BUTTON_DEBOUNCE_MS =
+        30;  // TODO: Confirm feel on real SW
 
     // STANDBY BLINK INDICATION
     // TODO: confirm desired rate
