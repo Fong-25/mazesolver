@@ -33,4 +33,35 @@ namespace UserConfig {
     // TODO: exploration speed cap, fast-run speed, sensor-covered-start
     // threshold — these depend on RobotConfig motion limits above, fill in once
     // MotorControl exists
+
+    enum class WheelGesture : uint8_t { FORWARD, BACKWARD };
+
+    constexpr uint8_t MODE_SEQUENCE_LENGTH = 3;
+
+    struct ModeSequenceEntry {
+        uint8_t modeIndex;  // matches Bluetooth's MODE <n> numbering
+        WheelGesture sequence[MODE_SEQUENCE_LENGTH];
+    };
+
+    constexpr ModeSequenceEntry MODE_SEQUENCES[] = {
+        {0,
+         {WheelGesture::FORWARD, WheelGesture::FORWARD,
+          WheelGesture::BACKWARD}},  // EXPLORE
+        {1,
+         {WheelGesture::FORWARD, WheelGesture::BACKWARD,
+          WheelGesture::FORWARD}},  // FAST_RUN
+        {2,
+         {WheelGesture::BACKWARD, WheelGesture::BACKWARD,
+          WheelGesture::FORWARD}},  // DIAGNOSTIC
+        {3,
+         {WheelGesture::FORWARD, WheelGesture::FORWARD,
+          WheelGesture::FORWARD}},  // DEBUG_LOG
+        {4,
+         {WheelGesture::BACKWARD, WheelGesture::BACKWARD,
+          WheelGesture::BACKWARD}},  // MOTION_TEST
+    };
+    constexpr uint8_t MODE_SEQUENCE_COUNT =
+        sizeof(MODE_SEQUENCES) / sizeof(MODE_SEQUENCES[0]);
+
+    constexpr uint32_t MODE_GESTURE_TIMEOUT_MS = 2000;
 }

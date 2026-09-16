@@ -57,4 +57,11 @@ namespace RobotConfig {
     constexpr float BATTERY_LOW_VOLTAGE = 7.0f;
     constexpr float BATTERY_CRITICAL_VOLTAGE = 6.6f;  // TODO: confirm
     constexpr float BATTERY_FILTER_ALPHA = 0.1f;  // exponential filter weight
+
+    // which wheel drives gesture input
+    constexpr bool MODE_SELECT_USE_LEFT_WHEEL = true;
+
+    // Quarter wheel revolution per gesture
+    constexpr float MODE_GESTURE_MIN_COUNTS =
+        ENCODER_COUNTS_PER_OUTPUT_REV / 4.0f;
 }
