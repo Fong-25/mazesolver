@@ -15,6 +15,7 @@
 #include "drivers/RGB.h"
 #include "drivers/ToFManager.h"
 #include "modes/ModeManager.h"
+#include "modes/RgbStatus.h"
 #include "system/Diagnostics.h"
 #include "system/Safety.h"
 #include "system/Scheduler.h"
@@ -45,7 +46,8 @@ void setup() {
                                // moment
     }
 
-    RGB::begin();             // step 8
+    RGB::begin();  // step 8
+    RgbStatus::begin();
     Button::begin();          // step 9
     DipSwitch::begin();       // step 10
     BatteryMonitor::begin();  // step 11
@@ -112,6 +114,7 @@ void loop() {
     Bluetooth::update();
 
     ModeManager::update(nowMs);
+    RgbStatus::update(nowMs);  // reads this tick's ModeManager state
 
     // Never kick unconditionally -- see SETUP_NOTES.md, that defeats the
     // entire point of having a watchdog.

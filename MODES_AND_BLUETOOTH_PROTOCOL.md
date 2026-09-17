@@ -2,19 +2,50 @@
 
 ## Full mode table (wheel-gesture selection stays the primary path; BT is a bench-testing shortcut)
 
-| # | Mode         | Wheel gesture | BT command | RGB (TBD once RgbStatus exists) |
+| # | Mode         | Wheel gesture | BT command | RGB (solid, `UserConfig::RGB_*`) |
 |---|--------------|----------------|------------|----------------------------------|
-| 0 | EXPLORE      | F, F, B        | `MODE 0`   | solid color A |
-| 1 | FAST_RUN     | F, B, F        | `MODE 1`   | solid color B |
-| 2 | DIAGNOSTIC   | B, B, F        | `MODE 2`   | solid color C |
-| 3 | DEBUG_LOG    | F, F, F        | `MODE 3`   | solid color D (TBD) |
-| 4 | MOTION_TEST  | B, B, B        | `MODE 4`   | solid color E (TBD) |
+| 0 | EXPLORE      | F, F, B        | `MODE 0`   | green |
+| 1 | FAST_RUN     | F, B, F        | `MODE 1`   | blue |
+| 2 | DIAGNOSTIC   | B, B, F        | `MODE 2`   | yellow |
+| 3 | DEBUG_LOG    | F, F, F        | `MODE 3`   | cyan |
+| 4 | MOTION_TEST  | B, B, B        | `MODE 4`   | magenta |
 
 DEBUG_LOG and MOTION_TEST sit alongside EXPLORE/FAST_RUN/DIAGNOSTIC as full
 sibling modes in ModeManager — not nested inside DIAGNOSTIC — so no extra
 state-machine layer needed. Both inherit DIAGNOSTIC's existing rule from
 spec section 62: **no autonomous maze motion, motors only move during an
 explicit, requested action.**
+
+## RGB status behavior (`RgbStatus`)
+
+`RgbStatus` is the only module allowed to touch `RGB` directly -- it reads
+`ModeManager`/`SettingMode`/`StandbyMode` and translates that into color +
+blink. Colors are `UserConfig::RGB_*` constants (first-pass placeholders,
+tune once the LED's on the bench).
+
+| SystemState | RGB |
+|---|---|
+| BOOT / INIT | off (TODO: startup animation, spec §17) |
+| SETTING | off until a gesture sequence matches this session, then solid selected-mode color |
+| LOCKED | solid locked-mode color (off if nothing's ever been locked yet) |
+| STANDBY, waiting for cover | selected-mode color, blinking |
+| STANDBY, cover confirmed | selected-mode color, **solid** |
+| RUNNING | solid mode color (same color as LOCKED/SETTING -- no visual seam at the transition) |
+| FINISHED | solid white (`RGB_FINISHED_*`) |
+| ERROR | solid red (`RGB_ERROR_*`) |
+
+### Standby: solid-on-cover feedback
+
+Not in the original spec -- added because blinking the whole time gives no
+signal for whether a cover gesture actually registered until after you've
+already released and the robot either did or didn't start moving.
+
+Now: RGB blinks through `WAIT_FOR_COVER`, then switches to **solid** the
+instant `StandbyMode` sees a valid cover (`isCoverConfirmed()` becomes
+true) -- while the sensor is still covered, before release. Solid means
+"that cover counted, go ahead and release." It stays solid through the
+release and into RUNNING (same color, so there's no seam), and only starts
+blinking again the next time `STANDBY` is freshly entered.
 
 ## Mode 2 — DIAGNOSTIC (now with concrete commands)
 

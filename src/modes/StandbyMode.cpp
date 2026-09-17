@@ -68,4 +68,6 @@ namespace StandbyMode {
     }
 
     bool isRunTriggered() { return runTriggered; }
+
+    bool isCoverConfirmed() { return state == SubState::COVERED; }
 }

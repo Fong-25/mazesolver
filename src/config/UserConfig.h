@@ -24,10 +24,28 @@ namespace UserConfig {
 
     constexpr uint32_t BLUETOOTH_BAUD = 115200;
     constexpr uint32_t LOG_STREAM_INTERVAL_MS = 100;
-    // RGB COLOR (placeholder — define per mode once ModeManager
-    // exists)
-    // TODO: assign real colors per state (SETTING / LOCK / STANDBY / RUN /
-    // ERROR)
+
+    // RGB COLORS -- one solid color identifies each locked RunMode, reused
+    // as-is for RUNNING (spec §62's "dedicated run color" IS just the mode
+    // color, no separate constant needed). First-pass placeholders --
+    // adjust for visibility/colorblind-friendliness once the LED's on the
+    // bench.
+    constexpr uint8_t RGB_EXPLORE_R = 0, RGB_EXPLORE_G = 255,
+                      RGB_EXPLORE_B = 0;  // green
+    constexpr uint8_t RGB_FAST_RUN_R = 0, RGB_FAST_RUN_G = 0,
+                      RGB_FAST_RUN_B = 255;  // blue
+    constexpr uint8_t RGB_DIAGNOSTIC_R = 255, RGB_DIAGNOSTIC_G = 255,
+                      RGB_DIAGNOSTIC_B = 0;  // yellow
+    constexpr uint8_t RGB_DEBUG_LOG_R = 0, RGB_DEBUG_LOG_G = 255,
+                      RGB_DEBUG_LOG_B = 255;  // cyan
+    constexpr uint8_t RGB_MOTION_TEST_R = 255, RGB_MOTION_TEST_G = 0,
+                      RGB_MOTION_TEST_B = 255;  // magenta
+
+    // Non-mode status colors.
+    constexpr uint8_t RGB_ERROR_R = 255, RGB_ERROR_G = 0,
+                      RGB_ERROR_B = 0;  // red
+    constexpr uint8_t RGB_FINISHED_R = 255, RGB_FINISHED_G = 255,
+                      RGB_FINISHED_B = 255;  // white
 
     // MAZE GOAL
     // TODO: goal cell coordinates depend on maze size convention
