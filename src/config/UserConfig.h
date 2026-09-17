@@ -18,6 +18,9 @@ namespace UserConfig {
 
     // TOF
     constexpr uint32_t TOF_POLL_INTERVAL_MS = 20;
+    // Which ToF triggers RUN start
+    // 0=FRONT_LEFT, 1=FRONT_RIGHT, 2=DIAGONAL_LEFT, 3=DIAGONAL_RIGHT
+    constexpr uint8_t START_SENSOR_ROLE_INDEX = 0;
 
     constexpr uint32_t BLUETOOTH_BAUD = 115200;
     constexpr uint32_t LOG_STREAM_INTERVAL_MS = 100;

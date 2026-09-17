@@ -9,6 +9,9 @@ namespace SensorConfig {
     constexpr uint8_t TOF_ADDR_3 = 0x32;
     constexpr uint8_t TOF_ADDR_4 = 0x33;
 
+    // "covered" = very close, per spec section 24
+    constexpr uint16_t TOF_COVER_THRESHOLD_MM = 30;
+
     constexpr uint8_t IMU_I2C_ADDRESS = 0x68;
 
     // Gyro full-scale select register value + its matching sensitivity.
