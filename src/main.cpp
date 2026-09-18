@@ -16,6 +16,7 @@
 #include "drivers/ToFManager.h"
 #include "modes/ModeManager.h"
 #include "modes/RgbStatus.h"
+#include "navigation/Maze.h"
 #include "system/Diagnostics.h"
 #include "system/Safety.h"
 #include "system/Scheduler.h"
@@ -82,6 +83,7 @@ void setup() {
     if (!tofOk) Safety::triggerFault(Diagnostics::ErrorCode::TOF_INIT_FAILED);
     if (!imuOk) Safety::triggerFault(Diagnostics::ErrorCode::IMU_INIT_FAILED);
 
+    Maze::reset();
     ModeManager::begin();  // step 15 -- LOCKED (or ERROR, corrected on the
                            // first loop() tick if a fault was just
                            // triggered above)

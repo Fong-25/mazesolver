@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "../config/MazeConfig.h"
 #include "../config/UserConfig.h"
 #include "../control/MotorControl.h"
 #include "../control/PoseEstimator.h"
@@ -11,6 +12,7 @@
 #include "../drivers/IMU.h"
 #include "../drivers/MotorDriver.h"
 #include "../drivers/ToFManager.h"
+#include "../navigation/Maze.h"
 #include "../system/Diagnostics.h"
 #include "../system/Safety.h"
 
@@ -34,6 +36,94 @@ namespace {
 
     bool hasPendingTest = false;
     char pendingTestName[8] = {0};
+
+    // WALL is a known wall, OPEN is a known gap, UNKNOWN means neither side
+    // of that edge has been visited yet -- only ever UNKNOWN for interior
+    // edges, never the border (see below).
+    enum class WallState : uint8_t { OPEN, WALL, UNKNOWN };
+
+    WallState wallStateAt(uint8_t x, uint8_t y, Maze::Direction dir) {
+        bool present = Maze::hasWall(x, y, dir);
+        uint8_t nx, ny;
+        if (!Maze::neighborOf(x, y, dir, nx, ny)) {
+            // Grid boundary -- Maze::reset() stamps these unconditionally, so
+            // they're always known regardless of what's been explored.
+            return present ? WallState::WALL : WallState::OPEN;
+        }
+        if (!Maze::isVisited(x, y) && !Maze::isVisited(nx, ny)) {
+            return WallState::UNKNOWN;  // neither side explored yet
+        }
+        return present ? WallState::WALL : WallState::OPEN;
+    }
+
+    char mazeCellChar(uint8_t x, uint8_t y) {
+        if (x == MazeConfig::START_X && y == MazeConfig::START_Y) return 'S';
+        if (x >= MazeConfig::GOAL_X_MIN && x <= MazeConfig::GOAL_X_MAX &&
+            y >= MazeConfig::GOAL_Y_MIN && y <= MazeConfig::GOAL_Y_MAX) {
+            return 'G';
+        }
+        return Maze::isVisited(x, y) ? '.' : ' ';
+    }
+
+    void printMazeHorizontalEdge(uint8_t y, Maze::Direction dir) {
+        for (uint8_t x = 0; x < MazeConfig::WIDTH; x++) {
+            Serial.print('+');
+            switch (wallStateAt(x, y, dir)) {
+                case WallState::WALL:
+                    Serial.print(F("---"));
+                    break;
+                case WallState::OPEN:
+                    Serial.print(F("   "));
+                    break;
+                case WallState::UNKNOWN:
+                    Serial.print(F("..."));
+                    break;
+            }
+        }
+        Serial.println('+');
+    }
+
+    void printMazeCellRow(uint8_t y) {
+        for (uint8_t x = 0; x < MazeConfig::WIDTH; x++) {
+            switch (wallStateAt(x, y, Maze::Direction::WEST)) {
+                case WallState::WALL:
+                    Serial.print('|');
+                    break;
+                case WallState::OPEN:
+                    Serial.print(' ');
+                    break;
+                case WallState::UNKNOWN:
+                    Serial.print('?');
+                    break;
+            }
+            Serial.print(' ');
+            Serial.print(mazeCellChar(x, y));
+            Serial.print(' ');
+        }
+        switch (wallStateAt(MazeConfig::WIDTH - 1, y, Maze::Direction::EAST)) {
+            case WallState::WALL:
+                Serial.println('|');
+                break;
+            case WallState::OPEN:
+                Serial.println(' ');
+                break;
+            case WallState::UNKNOWN:
+                Serial.println('?');
+                break;
+        }
+    }
+
+    // On-demand ASCII snapshot of the current runtime map -- one renderer for
+    // every stage, see rationale above.
+    void printMaze() {
+        Serial.println(F("MAP"));
+        for (int8_t y = MazeConfig::HEIGHT - 1; y >= 0; y--) {
+            printMazeHorizontalEdge((uint8_t)y, Maze::Direction::NORTH);
+            printMazeCellRow((uint8_t)y);
+        }
+        printMazeHorizontalEdge(0, Maze::Direction::SOUTH);
+        Serial.println(F("END MAP"));
+    }
 
     void printToF() {
         Serial.print(F("SENSOR FL="));
@@ -270,7 +360,7 @@ namespace {
         else if (strcasecmp(cmd, "TEST") == 0)
             handleTestCommand(savePtr);
         else if (strcasecmp(cmd, "MAP") == 0)
-            Serial.println(F("MAP: not yet implemented (Navigation pending)"));
+            printMaze();
         else
             Serial.println(F("ERR unknown command"));
     }

@@ -104,6 +104,52 @@ Individually selectable primitives, plus a "run all in sequence" option:
 | `TEST TURN180` | In-place 180° turn ("turning backward") |
 | `TEST ALL`     | Runs the full sequence above, in order, with a pause between each |
 
+## `MAP` command — maze snapshot over Bluetooth
+
+Prints the current runtime `Maze` state as ASCII art. One renderer for
+every stage of a run — it doesn't know or care whether EXPLORE has run
+yet, it just reflects what's actually in `Maze`:
+
+- **Before any exploration**: nothing is `visited`, so every interior wall
+  renders as `UNKNOWN` (`...` / `?`) and only the four outer border walls
+  (stamped by `Maze::reset()`) show up solid.
+- **After a successful explore + save**: walls adjacent to a `visited`
+  cell resolve out of `UNKNOWN` into real `WALL`/`OPEN`. Cells FloodFill
+  never reached stay `UNKNOWN` — since flood-fill exploration doesn't
+  have to visit the whole grid to reach the goal, this naturally shows
+  only the explored subset, not the full 16x16.
+
+Legend:
+
+| Symbol | Meaning |
+|---|---|
+| `---` / `\|` | known wall |
+| (blank) | known open (no wall) |
+| `...` / `?` | not yet explored (neither adjacent cell visited) |
+| `S` | start cell |
+| `G` | goal region |
+| `.` | visited cell (not start/goal) |
+| ` ` (cell interior) | unvisited cell |
+
+Example, fresh boot (4x4 shown for brevity — real grid is
+`MazeConfig::WIDTH` x `MazeConfig::HEIGHT`):
+
+MAP
++---+---+---+---+ <br>
+| . . . |         <br>
++...+...+...+...+ <br>
+| . . . |         <br>
++...+...+...+...+ <br>
+| . . . |         <br>
++...+...+...+...+ <br>
+| S . . |         <br>
++---+---+---+---+ <br>
+END MAP
+
+
+Send `MAP` any time over Bluetooth (works in any `ModeManager` state,
+same as `STATUS`/`PING`) to get a fresh snapshot.
+
 Safety, non-negotiable for this mode:
 - Every test has a **hard max-duration and max-distance cap** (config values,
   TBD once MotorControl/PID exist) — if a test doesn't self-terminate
