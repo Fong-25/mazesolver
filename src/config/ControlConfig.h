@@ -35,4 +35,20 @@ namespace ControlConfig {
 
     constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
     constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms
+
+    // MOTION PRIMITIVES (Motion.cpp) -- all first-pass placeholders, TODO
+    // tune on the real robot.
+    constexpr float FORWARD_BASE_SPEED_MM_S = 300.0f;
+    // Clamp on the heading-hold PID's output -- added to/subtracted from
+    // FORWARD_BASE_SPEED_MM_S per wheel, so this is how hard a straight
+    // segment will fight to correct a heading error.
+    constexpr float HEADING_CORRECTION_LIMIT_MM_S = 200.0f;
+
+    constexpr float TURN_SPEED_DEG_S = 180.0f;
+    constexpr float TURN_ANGLE_TOLERANCE_DEG = 2.0f;
+
+    // Both primitives end with target speed 0 held for this long before
+    // reporting complete -- lets the wheel PID actually settle instead of
+    // the next primitive getting armed on top of leftover momentum.
+    constexpr uint32_t MOTION_SETTLE_MS = 80;
 }

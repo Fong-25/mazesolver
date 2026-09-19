@@ -25,6 +25,9 @@ namespace RobotConfig {
     // WHEEL_TRACK_MM is unused currently
     constexpr float WHEEL_TRACK_MM = 72.0f;  // TODO: confirm
 
+    // Classic micromouse cell pitch
+    constexpr float CELL_SIZE_MM = 180.0f;
+
     // TOF
     constexpr uint8_t TOF_INSTALLED_COUNT = 4;
 
