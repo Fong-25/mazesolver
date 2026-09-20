@@ -3,6 +3,7 @@
 #include "../communication/Bluetooth.h"
 #include "../drivers/Button.h"
 #include "../drivers/DipSwitch.h"
+#include "../navigation/Explorer.h"
 #include "../system/Safety.h"
 #include "SettingMode.h"
 #include "StandbyMode.h"
@@ -100,16 +101,24 @@ namespace ModeManager {
                 StandbyMode::update(nowMs);
                 if (StandbyMode::isRunTriggered()) {
                     state = SystemState::RUNNING;
-                    // TODO: dispatch to the selected run mode's begin()
-                    // once Explorer/FastRun/Diagnostic exist:
-                    //   switch (lockedMode) { ... }
+                    if (lockedMode == RunMode::EXPLORE) {
+                        Explorer::begin();
+                    }
+                    // TODO: FAST_RUN/DIAGNOSTIC/DEBUG_LOG/MOTION_TEST dispatch
+                    // once those modules exist -- RUNNING just sits idle for
+                    // them for now, same as before.
                 }
                 break;
 
             case SystemState::RUNNING:
-                // TODO: dispatch update() to whichever module RUNNING is
-                // delegating to, and watch for ITS completion signal to
-                // move to FINISHED. Nothing to run yet.
+                if (lockedMode == RunMode::EXPLORE) {
+                    Explorer::update(nowMs);
+                    if (Explorer::isDone()) {
+                        state = SystemState::FINISHED;
+                    }
+                }
+                // TODO: same dispatch gap as STANDBY's above for the other four
+                // modes -- nothing to delegate update() to yet.
                 break;
 
             case SystemState::FINISHED:
