@@ -9,6 +9,7 @@
 #include "../system/Safety.h"
 #include "FloodFill.h"
 #include "Maze.h"
+#include "MazePersistence.h"
 
 namespace {
     enum class Phase : uint8_t { IDLE, DECIDE, TURNING, MOVING, DONE };
@@ -153,9 +154,10 @@ namespace {
         // 4. Goal / home check.
         if (leg == Leg::TO_GOAL && isGoalCell(cellX, cellY)) {
             leg = Leg::TO_START;
-            // TODO: map-save hook once a persistence module exists --
-            // this is exactly the "successful exploration complete" event
-            // spec section 48 says should trigger the EEPROM write.
+            // "Successful exploration complete" -- spec section 48's first save
+            // trigger. The second (explicit save command) is a small follow-on
+            // for Bluetooth.cpp, not added yet.
+            MazePersistence::save();
             FloodFill::computeToTarget(MazeConfig::START_X,
                                        MazeConfig::START_Y);
         }
