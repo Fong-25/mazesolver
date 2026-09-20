@@ -13,6 +13,7 @@
 #include "../drivers/MotorDriver.h"
 #include "../drivers/ToFManager.h"
 #include "../navigation/Maze.h"
+#include "../navigation/MazePersistence.h"
 #include "../system/Diagnostics.h"
 #include "../system/Safety.h"
 
@@ -361,7 +362,18 @@ namespace {
             handleTestCommand(savePtr);
         else if (strcasecmp(cmd, "MAP") == 0)
             printMaze();
-        else
+        else if (strcasecmp(cmd, "SAVE") == 0) {
+            MazePersistence::save();
+            Serial.println(F("SAVE OK"));
+        } else if (strcasecmp(cmd, "LOAD") == 0) {
+            if (MazePersistence::load()) {
+                Serial.println(F("LOAD OK"));
+            } else {
+                Serial.println(
+                    F("LOAD FAIL: no valid saved maze (magic/version/"
+                      "checksum mismatch)"));
+            }
+        } else
             Serial.println(F("ERR unknown command"));
     }
 

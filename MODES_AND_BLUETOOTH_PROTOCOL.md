@@ -150,6 +150,46 @@ END MAP
 Send `MAP` any time over Bluetooth (works in any `ModeManager` state,
 same as `STATUS`/`PING`) to get a fresh snapshot.
 
+## `SAVE` / `LOAD` commands — persist/restore the map over Bluetooth
+ 
+Bench-testing shortcut for `MazePersistence`'s two triggers (spec section
+48): normally the EEPROM write happens automatically the moment EXPLORE
+reaches the goal, but these let you force it (or restore it) directly.
+ 
+| Command | Action |
+|---|---|
+| `SAVE` | Writes the current runtime `Maze` to EEPROM, replies `SAVE OK` |
+| `LOAD` | Loads EEPROM into `Maze` if magic/version/width/height/checksum all match, replies `LOAD OK` or `LOAD FAIL: ...` and leaves `Maze` untouched |
+ 
+Same as `MAP`: works in any `ModeManager` state, no gating — these are
+debug/ops tools, not part of the run state machine. `LOAD` failing is
+expected and harmless the very first time, before anything has ever been
+saved.
+ 
+## ToF sensor offset calibration (`SensorConfig::TOF_OFFSET_MM_*`)
+ 
+The four VL53L0X units don't agree with each other raw — confirmed on the
+bench (two agreeing, one under-reading, one over-reading, by roughly
+10-20mm at the same distance). `ToFManager` corrects for this once, per
+physical sensor, before any reading leaves the driver — `Explorer`,
+`FloodFill`, everything above it always sees an already-corrected value
+and needs no knowledge that the four units differ.
+ 
+**Procedure:**
+1. Place a target at a known reference distance (e.g. 100mm).
+2. For each sensor in turn, point it straight down its *own* optical axis
+   at the target — for the two diagonal sensors this means aligning the
+   target to that sensor's angle, not the robot's body heading.
+3. Read the raw distance (e.g. via `LOG T` in DEBUG_LOG/DIAGNOSTIC).
+4. `offset[i] = reference - reading[i]`. Negative offsets are expected
+   and correct for any sensor that over-reports distance.
+5. Set `SensorConfig::TOF_OFFSET_MM_1..4`, indexed by physical sensor
+   position (`XSHUT_PINS`/`TARGET_ADDR` order), NOT by logical role — the
+   bias belongs to that specific unit, not to where it's mounted.
+Applied in `ToFManager::pollOneSensor()`, added to the raw reading before
+the validity check and everything downstream (`FRONT_WALL_MM`,
+`SIDE_WALL_MAX_MM`) ever sees it.
+
 Safety, non-negotiable for this mode:
 - Every test has a **hard max-duration and max-distance cap** (config values,
   TBD once MotorControl/PID exist) — if a test doesn't self-terminate
