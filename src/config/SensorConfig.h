@@ -9,6 +9,24 @@ namespace SensorConfig {
     constexpr uint8_t TOF_ADDR_3 = 0x32;
     constexpr uint8_t TOF_ADDR_4 = 0x33;
 
+    // Per-physical-sensor distance correction, indexed identically to
+    // ToFManager's XSHUT_PINS/TARGET_ADDR arrays above (physical sensor
+    // 0-3, NOT logical role -- the bias belongs to that specific sensor
+    // unit, not to wherever it happens to be mounted). Added to every raw
+    // reading before anything else -- validity check, wall thresholds,
+    // everything downstream -- ever sees it, so the fix lives here once
+    // instead of getting compensated for all over Explorer/FloodFill.
+    //
+    // TODO: derive from testing -- hold all 4 sensors at the same known
+    // distance, note each raw reading, pick one of them (or their
+    // average) as the reference, then offset[i] = reference - raw[i].
+    // All zero until measured -- confirmed non-uniform on the bench
+    // (e.g. two agreeing, one under-reading, one over-reading by ~10mm).
+    constexpr int16_t TOF_OFFSET_MM_1 = 0;
+    constexpr int16_t TOF_OFFSET_MM_2 = 0;
+    constexpr int16_t TOF_OFFSET_MM_3 = 0;
+    constexpr int16_t TOF_OFFSET_MM_4 = 0;
+
     // "covered" = very close, per spec section 24
     constexpr uint16_t TOF_COVER_THRESHOLD_MM = 30;
 

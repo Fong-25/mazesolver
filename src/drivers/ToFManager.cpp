@@ -19,6 +19,10 @@ namespace {
         SensorConfig::TOF_ADDR_1, SensorConfig::TOF_ADDR_2,
         SensorConfig::TOF_ADDR_3, SensorConfig::TOF_ADDR_4};
 
+    const int16_t TOF_OFFSET_MM[MAX_SENSOR] = {
+        SensorConfig::TOF_OFFSET_MM_1, SensorConfig::TOF_OFFSET_MM_2,
+        SensorConfig::TOF_OFFSET_MM_3, SensorConfig::TOF_OFFSET_MM_4};
+
     VL53L0X sensors[MAX_SENSORS];
     bool sensorOk[MAX_SENSORS] = {false, false, false, false};
     uint16_t lastDistanceMm[MAX_SENSORS] = {0, 0, 0, 0};
@@ -45,7 +49,7 @@ namespace {
     void pollOneSensor(uint8_t i) {
         if (!sensorOk[i]) return;
 
-        uint16_t mm = sensors[i].readRangeContinuousMillimeters();
+        uint16_t rawMm = sensors[i].readRangeContinuousMillimeters();
 
         if (sensors[i].timeoutOccurred()) {
             // One bad I2C cycle -> keep last known good value rather than
@@ -53,9 +57,21 @@ namespace {
             return;
         }
 
-        lastDistanceMm[i] = mm;
-        lastValid[i] = (mm >= SensorConfig::TOF_MIN_VALID_MM &&
-                        mm <= SensorConfig::TOF_MAX_VALID_MM);
+        // Removed this to add offset for sensor
+        // lastDistanceMm[i] = mm;
+        // lastValid[i] = (mm >= SensorConfig::TOF_MIN_VALID_MM &&
+        //                 mm <= SensorConfig::TOF_MAX_VALID_MM);
+
+        // Per-sensor hardware bias correction -- applied once, here, so
+        // every consumer above this driver always sees an already-corrected
+        // distance and never has to know these four units don't agree with
+        // each other raw.
+        int32_t corrected = (int32_t)rawMm + TOF_OFFSET_MM[i];
+        if (corrected < 0) corrected = 0;
+
+        lastDistanceMm[i] = (uint16_t)corrected;
+        lastValid[i] = (lastDistanceMm[i] >= SensorConfig::TOF_MIN_VALID_MM &&
+                        lastDistanceMm[i] <= SensorConfig::TOF_MAX_VALID_MM);
     }
 }
 
