@@ -4,6 +4,7 @@
 #include "../drivers/Button.h"
 #include "../drivers/DipSwitch.h"
 #include "../navigation/Explorer.h"
+#include "../navigation/FastRun.h"
 #include "../system/Safety.h"
 #include "SettingMode.h"
 #include "StandbyMode.h"
@@ -114,6 +115,11 @@ namespace ModeManager {
                 if (lockedMode == RunMode::EXPLORE) {
                     Explorer::update(nowMs);
                     if (Explorer::isDone()) {
+                        state = SystemState::FINISHED;
+                    }
+                } else if (lockedMode == RunMode::FAST_RUN) {
+                    FastRun::update(nowMs);
+                    if (FastRun::isDone()) {
                         state = SystemState::FINISHED;
                     }
                 }

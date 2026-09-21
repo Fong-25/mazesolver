@@ -34,6 +34,7 @@ namespace {
     int32_t startLeftCount = 0, startRightCount = 0;
     float forwardStartYawDeg = 0.0f;
     uint32_t forwardLastUpdateUs = 0;
+    float forwardSpeedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S;
 
     // TURN_* state
     float turnStartYawDeg = 0.0f;
@@ -55,12 +56,13 @@ namespace {
         return (millis() - settleStartMs) >= ControlConfig::MOTION_SETTLE_MS;
     }
 
-    void armForward() {
+    void armForward(float speedMmS) {
         active = Motion::Primitive::FORWARD_CELL;
         startLeftCount = Encoder::LEFT_ENCODER_COUNT();
         startRightCount = Encoder::RIGHT_ENCODER_COUNT();
         forwardStartYawDeg = IMU::getYawDeg();
         forwardLastUpdateUs = micros();
+        forwardSpeedMmS = speedMmS;
         headingHoldPid.reset();
         settling = false;
     }
@@ -99,9 +101,8 @@ namespace {
         float correction =
             headingHoldPid.update(forwardStartYawDeg, IMU::getYawDeg(), dtSec);
 
-        MotorControl::setTargetSpeeds(
-            ControlConfig::FORWARD_BASE_SPEED_MM_S - correction,
-            ControlConfig::FORWARD_BASE_SPEED_MM_S + correction);
+        MotorControl::setTargetSpeeds(forwardSpeedMmS - correction,
+                                      forwardSpeedMmS + correction);
     }
 
     void updateTurn(uint32_t nowUs) {
@@ -130,9 +131,9 @@ namespace {
 namespace Motion {
     void begin() { active = Primitive::NONE; }
 
-    void moveForwardCell() {
+    void moveForwardCell(float speedMmS) {
         if (active != Primitive::NONE) return;
-        armForward();
+        armForward(speedMmS);
     }
 
     void turnLeft90() {

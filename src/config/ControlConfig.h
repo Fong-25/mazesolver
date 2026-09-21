@@ -44,6 +44,9 @@ namespace ControlConfig {
     // segment will fight to correct a heading error.
     constexpr float HEADING_CORRECTION_LIMIT_MM_S = 200.0f;
 
+    // TODO: tune, raise incrementally
+    constexpr float FAST_RUN_SPEED_MM_S = 500.0f;
+
     constexpr float TURN_SPEED_DEG_S = 180.0f;
     constexpr float TURN_ANGLE_TOLERANCE_DEG = 2.0f;
 

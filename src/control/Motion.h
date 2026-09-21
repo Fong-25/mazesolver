@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
+#include "../config/ControlConfig.h"
+
 // Non-blocking motion primitives (FIRMWARE_SPECS.md section 34). Explorer/
 // FastRun (once they exist) issue ONE of these at a time and poll
 // isBusy(), same pull-model as SettingMode/StandbyMode -- nothing here
@@ -32,7 +34,8 @@ namespace Motion {
     // Arms a primitive. No-op if one is already running -- caller must
     // wait for isBusy() to clear first, same one-at-a-time contract as
     // the rest of this codebase's state-machine modules.
-    void moveForwardCell();
+    void moveForwardCell(
+        float speedMmsS = ControlConfig::FORWARD_BASE_SPEED_MM_S);
     void turnLeft90();
     void turnRight90();
     void turn180();
