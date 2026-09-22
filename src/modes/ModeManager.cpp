@@ -104,6 +104,8 @@ namespace ModeManager {
                     state = SystemState::RUNNING;
                     if (lockedMode == RunMode::EXPLORE) {
                         Explorer::begin();
+                    } else if (lockedMode == RunMode::FAST_RUN) {
+                        FastRun::begin();
                     }
                     // TODO: FAST_RUN/DIAGNOSTIC/DEBUG_LOG/MOTION_TEST dispatch
                     // once those modules exist -- RUNNING just sits idle for

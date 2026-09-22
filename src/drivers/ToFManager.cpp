@@ -19,7 +19,7 @@ namespace {
         SensorConfig::TOF_ADDR_1, SensorConfig::TOF_ADDR_2,
         SensorConfig::TOF_ADDR_3, SensorConfig::TOF_ADDR_4};
 
-    const int16_t TOF_OFFSET_MM[MAX_SENSOR] = {
+    const int16_t TOF_OFFSET_MM[MAX_SENSORS] = {
         SensorConfig::TOF_OFFSET_MM_1, SensorConfig::TOF_OFFSET_MM_2,
         SensorConfig::TOF_OFFSET_MM_3, SensorConfig::TOF_OFFSET_MM_4};
 

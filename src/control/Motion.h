@@ -35,7 +35,7 @@ namespace Motion {
     // wait for isBusy() to clear first, same one-at-a-time contract as
     // the rest of this codebase's state-machine modules.
     void moveForwardCell(
-        float speedMmsS = ControlConfig::FORWARD_BASE_SPEED_MM_S);
+        float speedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S);
     void turnLeft90();
     void turnRight90();
     void turn180();
