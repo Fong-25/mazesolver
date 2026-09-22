@@ -1,6 +1,7 @@
 #include "ModeManager.h"
 
 #include "../communication/Bluetooth.h"
+#include "../control/Diagnostic.h"
 #include "../control/MotionTest.h"
 #include "../drivers/Button.h"
 #include "../drivers/DipSwitch.h"
@@ -109,10 +110,14 @@ namespace ModeManager {
                         FastRun::begin();
                     } else if (lockedMode == RunMode::MOTION_TEST) {
                         MotionTest::begin();
+                    } else if (lockedMode == RunMode::DIAGNOSTIC) {
+                        Diagnostic::begin();
                     }
-                    // TODO: FAST_RUN/DIAGNOSTIC/DEBUG_LOG/MOTION_TEST dispatch
-                    // once those modules exist -- RUNNING just sits idle for
-                    // them for now, same as before.
+                    // DEBUG_LOG needs no dispatch here -- its LOG
+                    // streaming already runs unconditionally via
+                    // Bluetooth::update(), regardless of ModeManager
+                    // state (deliberate: DIAGNOSTIC reuses the same
+                    // channels for exactly that reason).
                 }
                 break;
 
@@ -132,9 +137,13 @@ namespace ModeManager {
                     if (MotionTest::isDone()) {
                         state = SystemState::FINISHED;
                     }
+                } else if (lockedMode == RunMode::DIAGNOSTIC) {
+                    Diagnostic::update(nowMs);
+                    // isDone() is always false right now -- DIAGNOSTIC
+                    // has no defined exit yet, see the header's TODO.
                 }
-                // TODO: same dispatch gap as STANDBY's above for the other four
-                // modes -- nothing to delegate update() to yet.
+                // DEBUG_LOG needs no dispatch here -- see STANDBY's note
+                // above.
                 break;
 
             case SystemState::FINISHED:

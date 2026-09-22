@@ -10,7 +10,6 @@
 #include "../drivers/BatteryMonitor.h"
 #include "../drivers/Encoder.h"
 #include "../drivers/IMU.h"
-#include "../drivers/MotorDriver.h"
 #include "../drivers/ToFManager.h"
 #include "../navigation/Maze.h"
 #include "../navigation/MazePersistence.h"
@@ -37,6 +36,10 @@ namespace {
 
     bool hasPendingTest = false;
     char pendingTestName[8] = {0};
+
+    bool hasPendingMotor = false;
+    Bluetooth::MotorAction pendingMotorAction = Bluetooth::MotorAction::STOP;
+    int16_t pendingMotorPwm = 0;
 
     // WALL is a known wall, OPEN is a known gap, UNKNOWN means neither side
     // of that edge has been visited yet -- only ever UNKNOWN for interior
@@ -187,13 +190,18 @@ namespace {
             return;
         }
 
+        // Queued only -- never applied here. Diagnostic is the sole
+        // consumer, and only while ModeManager is actually in
+        // DIAGNOSTIC's own RUNNING session (see Bluetooth.h).
         if (strcasecmp(sub, "BRAKE") == 0) {
-            MotorDriver::brakeLeft();
-            MotorDriver::brakeRight();
-            Serial.println(F("MOTOR BRAKE"));
+            pendingMotorAction = Bluetooth::MotorAction::BRAKE;
+            hasPendingMotor = true;
+            Serial.println(
+                F("MOTOR BRAKE queued (applied only in DIAGNOSTIC)"));
         } else if (strcasecmp(sub, "STOP") == 0) {
-            MotorDriver::stopAll();
-            Serial.println(F("MOTOR STOP"));
+            pendingMotorAction = Bluetooth::MotorAction::STOP;
+            hasPendingMotor = true;
+            Serial.println(F("MOTOR STOP queued (applied only in DIAGNOSTIC)"));
         } else if (strcasecmp(sub, "L") == 0 || strcasecmp(sub, "R") == 0) {
             char* valStr = strtok_r(nullptr, " ", &savePtr);
             if (valStr == nullptr) {
@@ -202,14 +210,16 @@ namespace {
             }
             int16_t pwm = (int16_t)atoi(
                 valStr);  // MotorDriver clamps out-of-range internally
-            if (strcasecmp(sub, "L") == 0)
-                MotorDriver::setLeftPWM(pwm);
-            else
-                MotorDriver::setRightPWM(pwm);
+            pendingMotorAction = (strcasecmp(sub, "L") == 0)
+                                     ? Bluetooth::MotorAction::SET_LEFT
+                                     : Bluetooth::MotorAction::SET_RIGHT;
+            pendingMotorPwm = pwm;
+            hasPendingMotor = true;
             Serial.print(F("MOTOR "));
             Serial.print(sub);
             Serial.print(F(" = "));
-            Serial.println(pwm);
+            Serial.print(pwm);
+            Serial.println(F(" queued (applied only in DIAGNOSTIC)"));
         } else {
             Serial.println(F("ERR unknown MOTOR subcommand"));
         }
@@ -458,6 +468,14 @@ namespace Bluetooth {
         strncpy(outBuffer, pendingTestName, bufferSize - 1);
         outBuffer[bufferSize - 1] = '\0';
         hasPendingTest = false;
+        return true;
+    }
+
+    bool consumeMotorRequest(MotorAction& outAction, int16_t& outPwm) {
+        if (!hasPendingMotor) return false;
+        outAction = pendingMotorAction;
+        outPwm = pendingMotorPwm;
+        hasPendingMotor = false;
         return true;
     }
 }
