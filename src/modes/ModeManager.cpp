@@ -1,6 +1,7 @@
 #include "ModeManager.h"
 
 #include "../communication/Bluetooth.h"
+#include "../control/MotionTest.h"
 #include "../drivers/Button.h"
 #include "../drivers/DipSwitch.h"
 #include "../navigation/Explorer.h"
@@ -106,6 +107,8 @@ namespace ModeManager {
                         Explorer::begin();
                     } else if (lockedMode == RunMode::FAST_RUN) {
                         FastRun::begin();
+                    } else if (lockedMode == RunMode::MOTION_TEST) {
+                        MotionTest::begin();
                     }
                     // TODO: FAST_RUN/DIAGNOSTIC/DEBUG_LOG/MOTION_TEST dispatch
                     // once those modules exist -- RUNNING just sits idle for
@@ -122,6 +125,11 @@ namespace ModeManager {
                 } else if (lockedMode == RunMode::FAST_RUN) {
                     FastRun::update(nowMs);
                     if (FastRun::isDone()) {
+                        state = SystemState::FINISHED;
+                    }
+                } else if (lockedMode == RunMode::MOTION_TEST) {
+                    MotionTest::update(nowMs);
+                    if (MotionTest::isDone()) {
                         state = SystemState::FINISHED;
                     }
                 }
