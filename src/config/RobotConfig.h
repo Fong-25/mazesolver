@@ -28,6 +28,28 @@ namespace RobotConfig {
     // Classic micromouse cell pitch
     constexpr float CELL_SIZE_MM = 180.0f;
 
+    // Distance the very first FORWARD_CELL move of a run should travel,
+    // instead of a full CELL_SIZE_MM. If the robot starts parked with its
+    // rear against the starting cell's back wall, its center of rotation
+    // isn't at that cell's geometric center -- it's ROBOT_CENTER_TO_REAR_MM
+    // forward of the back wall. A first move of a full CELL_SIZE_MM would
+    // carry that same offset into every subsequent "cell center" for the
+    // rest of the run, since every move after the first is just a fixed
+    // CELL_SIZE_MM delta from wherever the robot actually is.
+    //
+    // FIRST_MOVE_DISTANCE_MM = CELL_SIZE_MM/2 - ROBOT_CENTER_TO_REAR_MM
+    // aligns the robot's center to the true center of the first cell, so
+    // every move after that is a clean, correctly-centered CELL_SIZE_MM.
+    //
+    // TODO: measure ROBOT_CENTER_TO_REAR_MM (rear bumper to the
+    // wheel-axle centerline) and recompute. Defaulting to CELL_SIZE_MM/2
+    // here, i.e. assuming ROBOT_CENTER_TO_REAR_MM ~= 0, which is almost
+    // certainly wrong -- this MUST be corrected before trusting alignment
+    // on a real run.
+    constexpr float ROBOT_CENTER_TO_REAR_MM = 0.0f;
+    constexpr float FIRST_MOVE_DISTANCE_MM =
+        (CELL_SIZE_MM / 2.0f) - ROBOT_CENTER_TO_REAR_MM;
+
     // TOF
     constexpr uint8_t TOF_INSTALLED_COUNT = 4;
 

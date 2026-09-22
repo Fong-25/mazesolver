@@ -35,6 +35,7 @@ namespace {
     float forwardStartYawDeg = 0.0f;
     uint32_t forwardLastUpdateUs = 0;
     float forwardSpeedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S;
+    float forwardTargetDistanceMm = RobotConfig::CELL_SIZE_MM;
 
     // TURN_* state
     float turnStartYawDeg = 0.0f;
@@ -56,13 +57,14 @@ namespace {
         return (millis() - settleStartMs) >= ControlConfig::MOTION_SETTLE_MS;
     }
 
-    void armForward(float speedMmS) {
+    void armForward(float speedMmS, float distanceMm) {
         active = Motion::Primitive::FORWARD_CELL;
         startLeftCount = Encoder::LEFT_ENCODER_COUNT();
         startRightCount = Encoder::RIGHT_ENCODER_COUNT();
         forwardStartYawDeg = IMU::getYawDeg();
         forwardLastUpdateUs = micros();
         forwardSpeedMmS = speedMmS;
+        forwardTargetDistanceMm = distanceMm;
         headingHoldPid.reset();
         settling = false;
     }
@@ -86,7 +88,7 @@ namespace {
                         (rightDelta * MM_PER_COUNT_RIGHT)) /
                        2.0f;
 
-        if (distMm >= RobotConfig::CELL_SIZE_MM) {
+        if (distMm >= forwardTargetDistanceMm) {
             beginSettle();
             return;
         }
@@ -131,9 +133,9 @@ namespace {
 namespace Motion {
     void begin() { active = Primitive::NONE; }
 
-    void moveForwardCell(float speedMmS) {
+    void moveForwardCell(float speedMmS, float distanceMm) {
         if (active != Primitive::NONE) return;
-        armForward(speedMmS);
+        armForward(speedMmS, distanceMm);
     }
 
     void turnLeft90() {

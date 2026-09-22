@@ -37,6 +37,8 @@ Never kick unconditionally — that defeats the entire point of the watchdog.
   math) are the thing to correct.
 - `BoardConfig::RGB_LED_COUNT`
   — Count the actual WS2812B chain length on the PCB.
+- `ROBOT_CENTER_TO_REAR_MM` 
+  — Measure distance from rear bumper to the wheel-axle centerline
 
 ## B. Simple direction/polarity checks (one test, flip a bool, done)
 - `RobotConfig::LEFT_MOTOR_REVERSED` / `RIGHT_MOTOR_REVERSED`

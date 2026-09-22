@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../communication/Bluetooth.h"
+#include "../config/ControlConfig.h"
 #include "Motion.h"
 #include "MotorControl.h"
 
@@ -45,8 +46,12 @@ namespace {
             case TestKind::ACCEL:
             case TestKind::CRUISE:
             case TestKind::DECEL:
-                // Same primitive for all three -- see header TODO.
-                Motion::moveForwardCell();
+                // Same primitive for all three -- see header TODO. Longer
+                // than one cell so CRUISE actually gets distance to hold
+                // steady-state speed at, not just accel-then-stop.
+                Motion::moveForwardCell(
+                    ControlConfig::FORWARD_BASE_SPEED_MM_S,
+                    ControlConfig::MOTION_TEST_FORWARD_DISTANCE_MM);
                 break;
             case TestKind::TURNL:
                 Motion::turnLeft90();
