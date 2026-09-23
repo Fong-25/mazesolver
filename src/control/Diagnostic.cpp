@@ -34,4 +34,6 @@ namespace Diagnostic {
     }
 
     bool isDone() { return false; }
+
+    void abort() { MotorDriver::stopAll(); }
 }

@@ -1,8 +1,6 @@
 #include "Explorer.h"
 
-#include "../config/ControlConfig.h"
 #include "../config/MazeConfig.h"
-#include "../config/RobotConfig.h"
 #include "../config/SensorConfig.h"
 #include "../control/Motion.h"
 #include "../control/MotorControl.h"
@@ -23,18 +21,6 @@ namespace {
     uint8_t cellX = 0, cellY = 0;
     Maze::Direction heading = Maze::Direction::NORTH;
     Maze::Direction pendingDir = Maze::Direction::NORTH;
-    bool firstMove = true;
-
-    // The very first forward primitive of a run needs a shorter distance
-    // than a full cell -- see RobotConfig::FIRST_MOVE_DISTANCE_MM's
-    // comment. Every move after that is a normal full cell.
-    float nextForwardDistance() {
-        if (firstMove) {
-            firstMove = false;
-            return RobotConfig::FIRST_MOVE_DISTANCE_MM;
-        }
-        return RobotConfig::CELL_SIZE_MM;
-    }
 
     Maze::Direction turnLeftOf(Maze::Direction d) {
         return (Maze::Direction)(((uint8_t)d + 3) % 4);
@@ -129,8 +115,7 @@ namespace {
         pendingDir = targetDir;
         if (targetDir == heading) {
             phase = Phase::MOVING;
-            Motion::moveForwardCell(ControlConfig::FORWARD_BASE_SPEED_MM_S,
-                                    nextForwardDistance());
+            Motion::moveForwardCell();
         } else if (targetDir == turnLeftOf(heading)) {
             phase = Phase::TURNING;
             Motion::turnLeft90();
@@ -169,9 +154,9 @@ namespace {
         // 4. Goal / home check.
         if (leg == Leg::TO_GOAL && isGoalCell(cellX, cellY)) {
             leg = Leg::TO_START;
-            // "Successful exploration complete" -- spec section 48's
-            // first save trigger. The second (explicit save command) is
-            // a small follow-on for Bluetooth.cpp, not added yet.
+            // "Successful exploration complete" -- spec section 48's first save
+            // trigger. The second (explicit save command) is a small follow-on
+            // for Bluetooth.cpp, not added yet.
             MazePersistence::save();
             FloodFill::computeToTarget(MazeConfig::START_X,
                                        MazeConfig::START_Y);
@@ -179,8 +164,7 @@ namespace {
         if (leg == Leg::TO_START && cellX == MazeConfig::START_X &&
             cellY == MazeConfig::START_Y) {
             Motion::stop();
-            MotorControl::disable();  // run's over -- never drive outside
-                                      // an active RUNNING dispatch
+            MotorControl::disable();
             phase = Phase::DONE;
             return;
         }
@@ -192,8 +176,6 @@ namespace {
             // valid maze; treat it as a software fault rather than
             // spinning here forever.
             Safety::triggerFault(Diagnostics::ErrorCode::SOFTWARE_FAULT);
-            // Safety::trip() already disables MotorControl -- no need to
-            // repeat it here.
             phase = Phase::DONE;
             return;
         }
@@ -203,6 +185,7 @@ namespace {
 
 namespace Explorer {
     void begin() {
+        MotorControl::enable();
         cellX = MazeConfig::START_X;
         cellY = MazeConfig::START_Y;
         // TODO: confirm the robot's physical start orientation actually
@@ -210,11 +193,6 @@ namespace Explorer {
         heading = Maze::Direction::NORTH;
         leg = Leg::TO_GOAL;
         phase = Phase::DECIDE;
-        firstMove = true;
-        MotorControl::enable();  // the one moment real motion is actually
-                                 // authorized -- matches the "never drive
-                                 // just because" boot-time disable() in
-                                 // main.cpp
     }
 
     void update(uint32_t nowMs) {
@@ -232,9 +210,7 @@ namespace Explorer {
                 if (!Motion::isBusy()) {
                     heading = pendingDir;
                     phase = Phase::MOVING;
-                    Motion::moveForwardCell(
-                        ControlConfig::FORWARD_BASE_SPEED_MM_S,
-                        nextForwardDistance());
+                    Motion::moveForwardCell();
                 }
                 break;
 
@@ -252,4 +228,10 @@ namespace Explorer {
     }
 
     bool isDone() { return phase == Phase::DONE; }
+
+    void abort() {
+        Motion::stop();
+        MotorControl::disable();
+        phase = Phase::DONE;
+    }
 }

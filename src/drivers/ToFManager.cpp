@@ -2,6 +2,7 @@
 
 #include <VL53L0X.h>
 #include <Wire.h>
+#include <math.h>
 
 #include "../config/BoardConfig.h"
 #include "../config/RobotConfig.h"
@@ -10,6 +11,17 @@
 
 namespace {
     constexpr uint8_t MAX_SENSORS = 4;
+
+    // Physical indices that carry the diagonal slant->perpendicular
+    // correction below -- must match RobotConfig::TOF_ROLE_INDEX_DIAGONAL_*.
+    constexpr uint8_t DIAGONAL_LEFT_IDX =
+        RobotConfig::TOF_ROLE_INDEX_DIAGONAL_LEFT;
+    constexpr uint8_t DIAGONAL_RIGHT_IDX =
+        RobotConfig::TOF_ROLE_INDEX_DIAGONAL_RIGHT;
+    // sin() isn't constexpr in every toolchain -- computed once at
+    // startup instead of per-reading.
+    const float DIAGONAL_SIN_MOUNT_ANGLE =
+        sinf(SensorConfig::TOF_DIAGONAL_MOUNT_ANGLE_DEG * PI / 180.0f);
 
     const uint8_t XSHUT_PINS[MAX_SENSORS] = {
         Board::PIN_TOF_XSHUT_1, Board::PIN_TOF_XSHUT_2, Board::PIN_TOF_XSHUT_3,
@@ -57,17 +69,19 @@ namespace {
             return;
         }
 
-        // Removed this to add offset for sensor
-        // lastDistanceMm[i] = mm;
-        // lastValid[i] = (mm >= SensorConfig::TOF_MIN_VALID_MM &&
-        //                 mm <= SensorConfig::TOF_MAX_VALID_MM);
-
-        // Per-sensor hardware bias correction -- applied once, here, so
-        // every consumer above this driver always sees an already-corrected
-        // distance and never has to know these four units don't agree with
-        // each other raw.
+        // Per-sensor hardware bias correction (SensorConfig::TOF_OFFSET_MM_*)
+        // -- applied once, here, so every consumer above this driver
+        // always sees an already-corrected distance and never has to
+        // know these four units don't agree with each other raw.
         int32_t corrected = (int32_t)rawMm + TOF_OFFSET_MM[i];
         if (corrected < 0) corrected = 0;
+
+        // Diagonal-only: slant range -> true perpendicular wall distance
+        // (see SensorConfig::TOF_DIAGONAL_MOUNT_ANGLE_DEG's comment).
+        // Applied after the offset correction, on the corrected value.
+        if (i == DIAGONAL_LEFT_IDX || i == DIAGONAL_RIGHT_IDX) {
+            corrected = (int32_t)((float)corrected * DIAGONAL_SIN_MOUNT_ANGLE);
+        }
 
         lastDistanceMm[i] = (uint16_t)corrected;
         lastValid[i] = (lastDistanceMm[i] >= SensorConfig::TOF_MIN_VALID_MM &&

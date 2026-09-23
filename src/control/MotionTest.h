@@ -20,4 +20,8 @@ namespace MotionTest {
     void begin();
     void update(uint32_t nowMs);
     bool isDone();
+
+    // Stops motion immediately and marks the run done -- for an external
+    // abort (Bluetooth EXIT) while a test is mid-flight.
+    void abort();
 }

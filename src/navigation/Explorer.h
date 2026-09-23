@@ -20,6 +20,8 @@ namespace Explorer {
     // Call every loop tick while a run is active.
     void update(uint32_t nowMs);
 
+    void abort();
+
     // True once the goal was reached AND the return-to-start leg is also
     // complete -- ModeManager's RUNNING state should treat this as the
     // signal to move to FINISHED.

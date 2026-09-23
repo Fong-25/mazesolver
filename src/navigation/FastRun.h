@@ -18,6 +18,8 @@ namespace FastRun {
 
     void update(uint32_t nowMs);
 
+    void abort();
+
     // True once the goal region is reached. Unlike Explorer, there's no
     // return-to-start leg -- fast run is a one-way timed attempt.
     bool isDone();

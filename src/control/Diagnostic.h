@@ -18,10 +18,13 @@ namespace Diagnostic {
     void begin();
     void update(uint32_t nowMs);
 
+    // Stops the motors directly (bypasses MotorControl, same as normal
+    // operation here) -- for an external abort (Bluetooth EXIT).
+    void abort();
+
     // DIAGNOSTIC never finishes on its own -- it's an open bring-up
-    // session for as long as the mode stays active, same open question
-    // as DEBUG_LOG (see MODES_AND_BLUETOOTH_PROTOCOL.md's open items:
-    // no exit mechanism back to LOCKED is defined yet for either).
-    // Always returns false for now.
+    // session for as long as the mode stays active. Leave it with the
+    // Bluetooth EXIT command (see abort() above), same as DEBUG_LOG.
+    // Always returns false.
     bool isDone();
 }

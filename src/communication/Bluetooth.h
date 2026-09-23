@@ -18,4 +18,12 @@ namespace Bluetooth {
     // session.
     enum class MotorAction : uint8_t { SET_LEFT, SET_RIGHT, BRAKE, STOP };
     bool consumeMotorRequest(MotorAction& outAction, int16_t& outPwm);
+
+    // One-shot: true if an EXIT command has arrived since the last call.
+    // ModeManager is the sole consumer -- ends whatever RUNNING session
+    // is active (any locked mode, not just the open-ended ones) and
+    // moves to FINISHED, the same graceful path a completed run takes.
+    // Distinct from the existing STOP command, which trips Safety into
+    // ERROR -- EXIT is "I'm done with this session", not a panic stop.
+    bool consumeExitRequest();
 }

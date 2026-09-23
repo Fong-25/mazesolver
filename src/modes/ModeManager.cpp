@@ -122,6 +122,27 @@ namespace ModeManager {
                 break;
 
             case SystemState::RUNNING:
+                // EXIT ends whatever's active and goes through the same
+                // graceful FINISHED -> PRESS -> LOCKED path a completed
+                // run takes. Checked before the per-mode dispatch so it
+                // short-circuits this tick regardless of which mode is
+                // locked -- the one thing every RUNNING session shares.
+                if (Bluetooth::consumeExitRequest()) {
+                    if (lockedMode == RunMode::EXPLORE) {
+                        Explorer::abort();
+                    } else if (lockedMode == RunMode::FAST_RUN) {
+                        FastRun::abort();
+                    } else if (lockedMode == RunMode::MOTION_TEST) {
+                        MotionTest::abort();
+                    } else if (lockedMode == RunMode::DIAGNOSTIC) {
+                        Diagnostic::abort();
+                    }
+                    // DEBUG_LOG has no module/state to stop -- EXIT just
+                    // needs to move ModeManager itself off RUNNING.
+                    state = SystemState::FINISHED;
+                    break;
+                }
+
                 if (lockedMode == RunMode::EXPLORE) {
                     Explorer::update(nowMs);
                     if (Explorer::isDone()) {
@@ -139,8 +160,8 @@ namespace ModeManager {
                     }
                 } else if (lockedMode == RunMode::DIAGNOSTIC) {
                     Diagnostic::update(nowMs);
-                    // isDone() is always false right now -- DIAGNOSTIC
-                    // has no defined exit yet, see the header's TODO.
+                    // isDone() is always false -- DIAGNOSTIC is
+                    // open-ended by design, left via EXIT above.
                 }
                 // DEBUG_LOG needs no dispatch here -- see STANDBY's note
                 // above.

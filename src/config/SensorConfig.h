@@ -27,6 +27,27 @@ namespace SensorConfig {
     constexpr int16_t TOF_OFFSET_MM_3 = 0;
     constexpr int16_t TOF_OFFSET_MM_4 = 0;
 
+    // Diagonal sensors are mounted at an angle to the robot's
+    // forward-travel axis, not pointing straight sideways -- their raw
+    // reading is a SLANT range along that angled beam, not the true
+    // perpendicular distance to a side wall. Converting once here means
+    // SIDE_WALL_MAX_MM (and anything else reading DIAGONAL_LEFT/RIGHT)
+    // can be tuned against an intuitive "actual distance to the wall"
+    // number instead of an angle-dependent slant range that gets longer
+    // just because the mount angle is shallower.
+    //
+    // perpendicularMm = slantRangeMm * sin(mountAngleDeg), where
+    // mountAngleDeg is measured from the forward-travel axis (0deg =
+    // pointing straight ahead, 90deg = pointing straight sideways).
+    // Applied only to the two DIAGONAL_* roles -- FRONT_LEFT/FRONT_RIGHT
+    // stay raw, since they're only ever used as presence/absence
+    // thresholds, not as a physically-meaningful distance.
+    //
+    // TODO: confirm against the actual PCB/mechanical mounting angle --
+    // 45deg is a common default assumption for a "diagonal" sensor, not
+    // a measurement of this specific board.
+    constexpr float TOF_DIAGONAL_MOUNT_ANGLE_DEG = 45.0f;
+
     // "covered" = very close, per spec section 24
     constexpr uint16_t TOF_COVER_THRESHOLD_MM = 30;
 

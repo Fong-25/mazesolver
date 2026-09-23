@@ -41,6 +41,8 @@ namespace {
     Bluetooth::MotorAction pendingMotorAction = Bluetooth::MotorAction::STOP;
     int16_t pendingMotorPwm = 0;
 
+    bool hasPendingExit = false;
+
     // WALL is a known wall, OPEN is a known gap, UNKNOWN means neither side
     // of that edge has been visited yet -- only ever UNKNOWN for interior
     // edges, never the border (see below).
@@ -383,6 +385,9 @@ namespace {
                     F("LOAD FAIL: no valid saved maze (magic/version/"
                       "checksum mismatch)"));
             }
+        } else if (strcasecmp(cmd, "EXIT") == 0) {
+            hasPendingExit = true;
+            Serial.println(F("EXIT queued"));
         } else
             Serial.println(F("ERR unknown command"));
     }
@@ -476,6 +481,12 @@ namespace Bluetooth {
         outAction = pendingMotorAction;
         outPwm = pendingMotorPwm;
         hasPendingMotor = false;
+        return true;
+    }
+
+    bool consumeExitRequest() {
+        if (!hasPendingExit) return false;
+        hasPendingExit = false;
         return true;
     }
 }
