@@ -45,6 +45,13 @@ namespace Motion {
     // for the very first travel of a run (start-cell centering -- see
     // that constant's comment; alone it's a pure alignment move). Heading
     // hold and the settle tail are unaffected by either parameter.
+    //
+    // The move itself ramps speed up to speedMmS and back down to ~0 by
+    // distanceMm at RobotConfig::MAX_LINEAR_ACCEL_MM_S2 (trapezoidal, or
+    // triangular if distanceMm is too short to reach speedMmS) rather than
+    // stepping straight to speedMmS -- this is what makes a batched
+    // multi-cell FastRun move behave like one continuous run instead of a
+    // jerky start.
     void moveForwardCell(
         float speedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S,
         float distanceMm = RobotConfig::CELL_SIZE_MM);

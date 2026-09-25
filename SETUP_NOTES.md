@@ -90,7 +90,13 @@ Never kick unconditionally — that defeats the entire point of the watchdog.
   `MAX_TURN_RATE_DEG_S`
   — Start at the conservative defaults already set. Raise gradually using
   `TEST ACCEL`/`TEST DECEL`, watching for wheel slip (visually, or a sudden
-  encoder/IMU mismatch) as the ceiling.
+  encoder/IMU mismatch) as the ceiling. `MAX_LINEAR_ACCEL_MM_S2` is the
+  accel/decel slope `Motion::moveForwardCell()` ramps at — too high and the
+  wheel PID can't keep up (slip on the accel edge, overshoot on the brake
+  edge); too low and a batched FastRun move spends most of its distance
+  ramping instead of at cruise speed. Tune this on `FAST_RUN_SPEED_MM_S`
+  moves specifically once FastRun is running for real, not just on
+  `MOTION_TEST`'s shorter segments.
 
 ## D. Bench calibration against a known reference
 - `RobotConfig::LEFT_WHEEL_DIAMETER_MM` / `RIGHT_WHEEL_DIAMETER_MM`

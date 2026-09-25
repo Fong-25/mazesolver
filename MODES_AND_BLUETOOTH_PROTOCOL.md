@@ -97,10 +97,11 @@ Behavior (`navigation/FastRun.cpp`), all running at `FAST_RUN_SPEED_MM_S`:
   from the current cell → `SOFTWARE_FAULT`.
 - Start alignment as in the section above.
 
-Known limits (not bugs): `Motion` has no velocity-profile shaping yet, so a
-batch still starts and stops with a step change in target speed rather than a
-ramp. Longer batches expose that more at high speed — the next thing to watch
-when raising `FAST_RUN_SPEED_MM_S`.
+`Motion::moveForwardCell()` ramps speed up to the requested speed and back
+down to ~0 by the target distance at `RobotConfig::MAX_LINEAR_ACCEL_MM_S2`
+(trapezoidal, or triangular for a short move) — so a batch accelerates once,
+cruises, and brakes once for the whole run, not per cell. See that function's
+header comment.
 
 ## Mode 2 — DIAGNOSTIC (now with concrete commands)
 

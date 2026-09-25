@@ -36,6 +36,17 @@ namespace {
     uint32_t forwardLastUpdateUs = 0;
     float forwardSpeedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S;
     float forwardTargetDistanceMm = RobotConfig::CELL_SIZE_MM;
+    // Trapezoidal (or, for a short move, triangular) velocity profile --
+    // spec section 31's "aggressive but controlled acceleration /
+    // deceleration". This is the commanded speed for THIS tick; it ramps
+    // toward forwardSpeedMmS at the top and is capped low enough, as
+    // distance runs out, to still be able to brake to ~0 by
+    // forwardTargetDistanceMm at the same accel limit. A short move (below
+    // one accel-then-decel's worth of distance) never reaches
+    // forwardSpeedMmS at all -- the brake cap kicks in before the ramp-up
+    // does, which is exactly a triangular profile, with no separate case
+    // needed for it.
+    float forwardCurrentSpeedMmS = 0.0f;
 
     // TURN_* state
     float turnStartYawDeg = 0.0f;
@@ -65,6 +76,7 @@ namespace {
         forwardLastUpdateUs = micros();
         forwardSpeedMmS = speedMmS;
         forwardTargetDistanceMm = distanceMm;
+        forwardCurrentSpeedMmS = 0.0f;
         headingHoldPid.reset();
         settling = false;
     }
@@ -95,6 +107,32 @@ namespace {
 
         float dtSec = (nowUs - forwardLastUpdateUs) / 1000000.0f;
         forwardLastUpdateUs = nowUs;
+        // A non-positive dt (stray zero-dt tick, or a clock rollover) must
+        // not move forwardCurrentSpeedMmS -- treat it as "hold speed, no
+        // correction this tick" rather than let a bad dt compute a bogus
+        // ramp step.
+        if (dtSec <= 0.0f) dtSec = 0.0f;
+
+        // Deceleration cap: the fastest we can be going right now and
+        // still stop (v=0) in the distance that's left, at
+        // MAX_LINEAR_ACCEL_MM_S2. v^2 = 2*a*d -> v = sqrt(2*a*d).
+        float remainingMm = forwardTargetDistanceMm - distMm;
+        if (remainingMm < 0.0f) remainingMm = 0.0f;
+        float brakeCapMmS =
+            sqrtf(2.0f * RobotConfig::MAX_LINEAR_ACCEL_MM_S2 * remainingMm);
+
+        float rampTargetMmS = forwardSpeedMmS;
+        if (brakeCapMmS < rampTargetMmS) rampTargetMmS = brakeCapMmS;
+
+        // Slew forwardCurrentSpeedMmS toward rampTargetMmS at the accel
+        // limit -- same constant for speeding up and braking, per spec
+        // section 31 (no separate decel constant defined). Applied as a
+        // step so it can move in either direction without a sign branch.
+        float maxStepMmS = RobotConfig::MAX_LINEAR_ACCEL_MM_S2 * dtSec;
+        float delta = rampTargetMmS - forwardCurrentSpeedMmS;
+        if (delta > maxStepMmS) delta = maxStepMmS;
+        if (delta < -maxStepMmS) delta = -maxStepMmS;
+        forwardCurrentSpeedMmS += delta;
 
         // Section 36: hold heading via differential correction rather
         // than commanding equal PWM outright. PID::update() itself no-ops
@@ -103,8 +141,8 @@ namespace {
         float correction =
             headingHoldPid.update(forwardStartYawDeg, IMU::getYawDeg(), dtSec);
 
-        MotorControl::setTargetSpeeds(forwardSpeedMmS - correction,
-                                      forwardSpeedMmS + correction);
+        MotorControl::setTargetSpeeds(forwardCurrentSpeedMmS - correction,
+                                      forwardCurrentSpeedMmS + correction);
     }
 
     void updateTurn(uint32_t nowUs) {
