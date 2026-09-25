@@ -47,6 +47,61 @@ true) -- while the sensor is still covered, before release. Solid means
 release and into RUNNING (same color, so there's no seam), and only starts
 blinking again the next time `STANDBY` is freshly entered.
 
+## Modes 0 & 1 — start-cell alignment (EXPLORE and FAST_RUN)
+
+Both runs start with the robot parked **against the start cell's rear wall**,
+so its wheel-axle centerline (the point every "move one cell" is measured
+from) is `RobotConfig::ROBOT_CENTER_TO_REAR_MM` from that wall — not
+`CELL_SIZE_MM / 2`. Every move after the first is a fixed `CELL_SIZE_MM`
+delta from wherever the robot actually is, so without a correction that
+offset would carry into every "cell center" for the whole run.
+
+`RobotConfig::FIRST_MOVE_DISTANCE_MM` (= `CELL_SIZE_MM/2 - ROBOT_CENTER_TO_REAR_MM`)
+is the extra forward travel that centers the robot in the start cell. It is
+an **addition**, never a replacement for a cell move, and it does not
+advance the cell counter — the robot is still in the start cell, just
+centered now.
+
+| Mode | How the alignment is applied |
+|---|---|
+| EXPLORE | Standalone alignment move (at `FORWARD_BASE_SPEED_MM_S`) **before the first sense** — the front ToF threshold is calibrated for a centered robot, so sensing from the parked position would read the front wall too far away. Then the normal DECIDE loop starts. |
+| FAST_RUN | Added onto the first straight run: `FIRST_MOVE_DISTANCE_MM + n × CELL_SIZE_MM`, so there is no extra stop. If the very first step needs a **turn** instead, a standalone alignment move happens first (turning in place from the un-centered position would put every later cell center off), then it re-decides. |
+
+Assumes the standard start: start cell open only toward the initial heading
+(NORTH), robot facing it. `ROBOT_CENTER_TO_REAR_MM` is still the `0.0f`
+placeholder until measured — see `SETUP_NOTES.md` section A. A
+`static_assert` in `RobotConfig.h` rejects a value above `CELL_SIZE_MM / 2`.
+
+## Mode 1 — FAST_RUN
+
+Purpose: run the already-known map (from a completed EXPLORE this session, or
+`LOAD`ed from EEPROM at boot) start → goal as one timed, one-way attempt. No
+wall sensing, no `Maze`/`FloodFill` updates during the run, no return leg.
+ModeManager entering FAST_RUN is the implicit contract that a valid map
+exists.
+
+Behavior (`navigation/FastRun.cpp`), all running at `FAST_RUN_SPEED_MM_S`:
+
+- **Path rule:** at each cell, step to the open neighbor with the lowest
+  `FloodFill` distance. Ties between equal-distance neighbors prefer
+  **straight over turning** — same length, fewer turns.
+- **Straight-run batching (spec §33):** consecutive same-direction steps are
+  issued as **one** `Motion::moveForwardCell(speed, n × CELL_SIZE_MM)`
+  primitive — no stop between cells. It looks ahead with the same rule the
+  real decision uses, so the batch is exactly what step-by-step would have
+  done. A batch ends at any turn, or at the first goal cell.
+- **Turns** still stop, rotate in place (IMU-tracked), then continue. Corner
+  smoothing / diagonals are **not** implemented — deliberately deferred
+  until this baseline is confirmed working on hardware.
+- **Ends** on entering any goal-region cell (motors disabled). No known path
+  from the current cell → `SOFTWARE_FAULT`.
+- Start alignment as in the section above.
+
+Known limits (not bugs): `Motion` has no velocity-profile shaping yet, so a
+batch still starts and stops with a step change in target speed rather than a
+ramp. Longer batches expose that more at high speed — the next thing to watch
+when raising `FAST_RUN_SPEED_MM_S`.
+
 ## Mode 2 — DIAGNOSTIC (now with concrete commands)
 
 Purpose: isolated hardware bring-up/testing. Motors only move on an
@@ -103,6 +158,17 @@ Individually selectable primitives, plus a "run all in sequence" option:
 | `TEST TURNR`   | In-place 90° right turn |
 | `TEST TURN180` | In-place 180° turn ("turning backward") |
 | `TEST ALL`     | Runs the full sequence above, in order, with a pause between each |
+
+Safety, non-negotiable for this mode:
+- Every test has a **hard max-duration and max-distance cap** (config values,
+  TBD once MotorControl/PID exist) — if a test doesn't self-terminate
+  cleanly within that cap, motors force-stop and an error is reported, not
+  left running.
+- `STOP` (already in the spec's suggested BT command list) works at all
+  times in this mode and kills motors immediately, regardless of which
+  test is mid-run.
+- This mode should probably also auto-arm a physical safety expectation:
+  robot needs clearance space, not maze-adjacent, given zero ToF awareness.
 
 ## `MAP` command — maze snapshot over Bluetooth
 
@@ -190,16 +256,44 @@ Applied in `ToFManager::pollOneSensor()`, added to the raw reading before
 the validity check and everything downstream (`FRONT_WALL_MM`,
 `SIDE_WALL_MAX_MM`) ever sees it.
 
-Safety, non-negotiable for this mode:
-- Every test has a **hard max-duration and max-distance cap** (config values,
-  TBD once MotorControl/PID exist) — if a test doesn't self-terminate
-  cleanly within that cap, motors force-stop and an error is reported, not
-  left running.
-- `STOP` (already in the spec's suggested BT command list) works at all
-  times in this mode and kills motors immediately, regardless of which
-  test is mid-run.
-- This mode should probably also auto-arm a physical safety expectation:
-  robot needs clearance space, not maze-adjacent, given zero ToF awareness.
+## Wall-detection threshold calibration (`SensorConfig::FRONT_WALL_MM`, `SIDE_WALL_MAX_MM`)
+
+Do the ToF offset calibration above first — `LOG T` (DEBUG_LOG/DIAGNOSTIC)
+prints values **after** the per-sensor offset and, for the diagonals, the
+slant→perpendicular correction, and these thresholds are compared against
+exactly those values. Measure the real thing directly rather than computing
+it from geometry; the point is what the sensors read in a real maze cell.
+
+Explorer senses with the robot at the **center of a cell** (this is why the
+start-cell alignment exists), so calibrate from that pose: robot's wheel-axle
+centerline over the cell center, aligned with the cell walls.
+
+**`FRONT_WALL_MM`**
+1. Place a real wall across the front of that cell. The wall face is
+   ~`CELL_SIZE_MM/2` (less half the wall thickness) ahead of the axle
+   centerline; each front sensor sits some distance ahead of the axle, so
+   its reading is that minus its forward offset — read it, don't compute it.
+2. `LOG T`: note `FRONT_LEFT` and `FRONT_RIGHT` with the wall present. Front
+   detection is **either sensor** (OR), so take the **larger** of the two.
+3. Remove the wall and note the readings with the front open (they will be at
+   least about one `CELL_SIZE_MM` larger — the next wall, or out of range).
+4. Set `FRONT_WALL_MM` above the wall-present reading by a margin that covers
+   stopping-position error (roughly ±10 mm — check by nudging the robot
+   forward/back), and well below the wall-absent reading. A false "wall"
+   only costs a wasted re-evaluation; a missed real wall costs a collision,
+   so bias toward the wall-present side.
+
+**`SIDE_WALL_MAX_MM`**
+1. Center the robot in a real corridor (both side walls present).
+2. `LOG T`: read `DIAGONAL_LEFT` and `DIAGONAL_RIGHT` — already corrected to
+   perpendicular distance, so no angle math needed.
+3. Open one side (remove that wall) and note the reading; repeat for the
+   other side. Expect it far above the wall-present value.
+4. Set `SIDE_WALL_MAX_MM` above the larger wall-present reading with margin
+   for lateral drift (shove the robot ~10 mm toward each side and confirm the
+   wall is still detected there), and below the wall-absent readings.
+5. Re-check after any change to `TOF_DIAGONAL_MOUNT_ANGLE_DEG` or the
+   offsets — the reading these compare against moves with them.
 
 ## Open items (deferred until Encoder/MotorControl/PID/Bluetooth exist)
 - Exact cruise speed, accel ramp, and turn parameters for each test — these

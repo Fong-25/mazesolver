@@ -41,10 +41,10 @@ namespace Motion {
     // defaults to one cell, but a caller can pass a multiple of
     // RobotConfig::CELL_SIZE_MM to cover several consecutive cells in one
     // primitive without stopping between them (FastRun's straight-run
-    // batching), or RobotConfig::FIRST_MOVE_DISTANCE_MM for the very
-    // first move of a run (see that constant's comment -- corrects for
-    // the robot not starting exactly cell-centered). Heading hold and the
-    // settle tail are unaffected by either parameter.
+    // batching), and can add RobotConfig::FIRST_MOVE_DISTANCE_MM on top
+    // for the very first travel of a run (start-cell centering -- see
+    // that constant's comment; alone it's a pure alignment move). Heading
+    // hold and the settle tail are unaffected by either parameter.
     void moveForwardCell(
         float speedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S,
         float distanceMm = RobotConfig::CELL_SIZE_MM);

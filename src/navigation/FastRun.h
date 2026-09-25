@@ -7,6 +7,12 @@
 // from MazeConfig::START_* to the goal region using Motion primitives at
 // ControlConfig::FAST_RUN_SPEED_MM_S.
 //
+// Consecutive same-direction steps are batched into ONE Motion primitive
+// (no stop between cells, spec section 33); turns still stop and rotate
+// in place. Ties between equal-length paths prefer going straight. The
+// first travel of a run also centers the robot in the start cell
+// (RobotConfig::FIRST_MOVE_DISTANCE_MM).
+//
 // Requires Maze to already hold a real map -- from a completed EXPLORE
 // run this session, or MazePersistence::load() at boot. Doesn't verify
 // that itself; ModeManager choosing to enter FAST_RUN at all is the

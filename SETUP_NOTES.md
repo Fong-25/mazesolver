@@ -37,8 +37,18 @@ Never kick unconditionally — that defeats the entire point of the watchdog.
   math) are the thing to correct.
 - `BoardConfig::RGB_LED_COUNT`
   — Count the actual WS2812B chain length on the PCB.
-- `ROBOT_CENTER_TO_REAR_MM` 
-  — Measure distance from rear bumper to the wheel-axle centerline
+- `RobotConfig::ROBOT_CENTER_TO_REAR_MM`
+  — Distance from the robot's rearmost point (the part that touches the start
+  cell's back wall) to the wheel-axle centerline, calipers/ruler, measured
+  along the direction of travel. Currently a `0.0f` placeholder, which is
+  almost certainly wrong. `FIRST_MOVE_DISTANCE_MM` derives from it
+  (`CELL_SIZE_MM/2 - this`) and is what centers the robot in the start cell
+  before EXPLORE senses / FAST_RUN's first run — a wrong value shifts every
+  cell center for the whole run. See `MODES_AND_BLUETOOTH_PROTOCOL.md`
+  "start-cell alignment". Verify on the bench: with the rear against a wall,
+  start EXPLORE in a real (or taped-out) start cell and check, right after
+  the alignment move and before it senses, that the axle sits over the
+  cell's center line.
 
 ## B. Simple direction/polarity checks (one test, flip a bool, done)
 - `RobotConfig::LEFT_MOTOR_REVERSED` / `RIGHT_MOTOR_REVERSED`
@@ -121,6 +131,9 @@ immediately valuable step than fusion.
   — Place a flat object at a known measured distance, compare against
   `LOG T`. Adjust thresholds to match real wall-detection distances for
   your maze cell size, not the datasheet's generic range.
+  For `FRONT_WALL_MM` / `SIDE_WALL_MAX_MM` specifically, follow the
+  procedure in `MODES_AND_BLUETOOTH_PROTOCOL.md` ("Wall-detection threshold
+  calibration") — measured from a centered pose in a real cell.
 - `SensorConfig::IMU_GYRO_FS_SEL` / `IMU_GYRO_SENSITIVITY_LSB_PER_DPS`
   — Currently ±500°/s. If `TEST TURNL`/`TURNR`/`TURN180` show the yaw rate
   pinned at a maximum value (clipping) during fast turns, raise the range

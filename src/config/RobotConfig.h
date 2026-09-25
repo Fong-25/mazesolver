@@ -28,27 +28,36 @@ namespace RobotConfig {
     // Classic micromouse cell pitch
     constexpr float CELL_SIZE_MM = 180.0f;
 
-    // Distance the very first FORWARD_CELL move of a run should travel,
-    // instead of a full CELL_SIZE_MM. If the robot starts parked with its
-    // rear against the starting cell's back wall, its center of rotation
-    // isn't at that cell's geometric center -- it's ROBOT_CENTER_TO_REAR_MM
-    // forward of the back wall. A first move of a full CELL_SIZE_MM would
-    // carry that same offset into every subsequent "cell center" for the
-    // rest of the run, since every move after the first is just a fixed
-    // CELL_SIZE_MM delta from wherever the robot actually is.
+    // Extra forward travel needed at the very start of a run to bring the
+    // robot from where it's actually parked to the true center of the
+    // start cell. If the robot starts with its rear against the start
+    // cell's back wall, its center of rotation is ROBOT_CENTER_TO_REAR_MM
+    // from that wall, not CELL_SIZE_MM/2. Every move after the first is
+    // just a fixed CELL_SIZE_MM delta from wherever the robot actually
+    // is, so without this the offset would carry into every "cell center"
+    // for the rest of the run.
     //
     // FIRST_MOVE_DISTANCE_MM = CELL_SIZE_MM/2 - ROBOT_CENTER_TO_REAR_MM
-    // aligns the robot's center to the true center of the first cell, so
-    // every move after that is a clean, correctly-centered CELL_SIZE_MM.
+    //
+    // This is an ADDITION to the first cell move, not a replacement for
+    // it: EXPLORE drives it as a standalone alignment move before its
+    // first sense; FAST_RUN adds it onto the first straight run
+    // (FIRST_MOVE_DISTANCE_MM + n * CELL_SIZE_MM). Either way the cell
+    // counter doesn't change from it -- the robot is still "in" the start
+    // cell, just centered now.
     //
     // TODO: measure ROBOT_CENTER_TO_REAR_MM (rear bumper to the
-    // wheel-axle centerline) and recompute. Defaulting to CELL_SIZE_MM/2
-    // here, i.e. assuming ROBOT_CENTER_TO_REAR_MM ~= 0, which is almost
-    // certainly wrong -- this MUST be corrected before trusting alignment
-    // on a real run.
+    // wheel-axle centerline; procedure in SETUP_NOTES.md section A). The
+    // 0.0f placeholder assumes the axle is AT the rear wall, which is
+    // almost certainly wrong -- this MUST be corrected before trusting
+    // alignment on a real run.
     constexpr float ROBOT_CENTER_TO_REAR_MM = 0.0f;
     constexpr float FIRST_MOVE_DISTANCE_MM =
         (CELL_SIZE_MM / 2.0f) - ROBOT_CENTER_TO_REAR_MM;
+    // A negative distance would mean the axle already sits past the cell
+    // center at the wall -- a mismeasurement, not a valid geometry.
+    static_assert(FIRST_MOVE_DISTANCE_MM >= 0.0f,
+                  "ROBOT_CENTER_TO_REAR_MM must be <= CELL_SIZE_MM / 2");
 
     // TOF
     constexpr uint8_t TOF_INSTALLED_COUNT = 4;

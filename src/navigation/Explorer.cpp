@@ -1,6 +1,8 @@
 #include "Explorer.h"
 
+#include "../config/ControlConfig.h"
 #include "../config/MazeConfig.h"
+#include "../config/RobotConfig.h"
 #include "../config/SensorConfig.h"
 #include "../control/Motion.h"
 #include "../control/MotorControl.h"
@@ -12,7 +14,14 @@
 #include "MazePersistence.h"
 
 namespace {
-    enum class Phase : uint8_t { IDLE, DECIDE, TURNING, MOVING, DONE };
+    enum class Phase : uint8_t {
+        IDLE,
+        DECIDE,
+        ALIGNING,
+        TURNING,
+        MOVING,
+        DONE
+    };
     enum class Leg : uint8_t { TO_GOAL, TO_START };
 
     Phase phase = Phase::IDLE;
@@ -21,6 +30,10 @@ namespace {
     uint8_t cellX = 0, cellY = 0;
     Maze::Direction heading = Maze::Direction::NORTH;
     Maze::Direction pendingDir = Maze::Direction::NORTH;
+
+    // True until the run's one-time start alignment move has been issued
+    // (see doDecide()).
+    bool alignPending = false;
 
     Maze::Direction turnLeftOf(Maze::Direction d) {
         return (Maze::Direction)(((uint8_t)d + 3) % 4);
@@ -129,6 +142,22 @@ namespace {
     }
 
     void doDecide() {
+        // 0. One-time start alignment. The robot is parked against the
+        // start cell's rear wall, so its center is ROBOT_CENTER_TO_REAR_MM
+        // from that wall, not CELL_SIZE_MM/2 -- sensing from there would
+        // read the front wall too far away (FRONT_WALL_MM is calibrated
+        // for a centered robot), and every later move is a fixed
+        // CELL_SIZE_MM delta that would carry the same offset forever.
+        // So drive to the true cell center first, THEN sense. Comes back
+        // through DECIDE once the move completes.
+        if (alignPending) {
+            alignPending = false;
+            phase = Phase::ALIGNING;
+            Motion::moveForwardCell(ControlConfig::FORWARD_BASE_SPEED_MM_S,
+                                    RobotConfig::FIRST_MOVE_DISTANCE_MM);
+            return;
+        }
+
         // 1-2. Sense, convert robot-relative readings to world-frame
         // walls using the current heading.
         bool front = senseFront();
@@ -192,6 +221,7 @@ namespace Explorer {
         // matches "north" the way Maze/MazeConfig define it.
         heading = Maze::Direction::NORTH;
         leg = Leg::TO_GOAL;
+        alignPending = RobotConfig::FIRST_MOVE_DISTANCE_MM > 0.0f;
         phase = Phase::DECIDE;
     }
 
@@ -204,6 +234,10 @@ namespace Explorer {
 
             case Phase::DECIDE:
                 doDecide();
+                break;
+
+            case Phase::ALIGNING:
+                if (!Motion::isBusy()) phase = Phase::DECIDE;
                 break;
 
             case Phase::TURNING:
