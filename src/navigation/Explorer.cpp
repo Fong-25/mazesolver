@@ -128,7 +128,10 @@ namespace {
         pendingDir = targetDir;
         if (targetDir == heading) {
             phase = Phase::MOVING;
-            Motion::moveForwardCell();
+            // Normal per-cell driving inside the known-so-far maze --
+            // the one case where trusting wall data makes sense.
+            Motion::moveForwardCell(ControlConfig::FORWARD_BASE_SPEED_MM_S,
+                                    RobotConfig::CELL_SIZE_MM, true);
         } else if (targetDir == turnLeftOf(heading)) {
             phase = Phase::TURNING;
             Motion::turnLeft90();
@@ -244,7 +247,9 @@ namespace Explorer {
                 if (!Motion::isBusy()) {
                     heading = pendingDir;
                     phase = Phase::MOVING;
-                    Motion::moveForwardCell();
+                    Motion::moveForwardCell(
+                        ControlConfig::FORWARD_BASE_SPEED_MM_S,
+                        RobotConfig::CELL_SIZE_MM, true);
                 }
                 break;
 

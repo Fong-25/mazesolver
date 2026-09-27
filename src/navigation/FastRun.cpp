@@ -121,7 +121,10 @@ namespace {
             distanceMm += RobotConfig::FIRST_MOVE_DISTANCE_MM;
             alignPending = false;
         }
-        Motion::moveForwardCell(ControlConfig::FAST_RUN_SPEED_MM_S, distanceMm);
+        // Normal batched driving inside the known map -- allowed to trust
+        // wall data, same as Explorer's per-cell moves.
+        Motion::moveForwardCell(ControlConfig::FAST_RUN_SPEED_MM_S, distanceMm,
+                                true);
     }
 
     void enterTurnOrMove(Maze::Direction targetDir) {

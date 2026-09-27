@@ -52,9 +52,18 @@ namespace Motion {
     // stepping straight to speedMmS -- this is what makes a batched
     // multi-cell FastRun move behave like one continuous run instead of a
     // jerky start.
+    //
+    // allowWallCentering opts THIS move into the ToF differential
+    // correction (ControlConfig::ENABLE_TOF_WALL_CENTERING must also be
+    // on -- both gates must agree). Defaults false: a move only makes
+    // sense to trust wall data on when the robot is centered in a known
+    // corridor, which is Explorer/FastRun's normal per-cell driving, not
+    // a start-alignment move (that IS the centering) and never
+    // MotionTest's open-bench primitives (no ToF involved by design).
     void moveForwardCell(
         float speedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S,
-        float distanceMm = RobotConfig::CELL_SIZE_MM);
+        float distanceMm = RobotConfig::CELL_SIZE_MM,
+        bool allowWallCentering = false);
     void turnLeft90();
     void turnRight90();
     void turn180();

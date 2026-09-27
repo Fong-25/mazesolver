@@ -33,6 +33,27 @@ namespace ControlConfig {
     constexpr float WALL_KI = 0.0f;
     constexpr float WALL_KD = 0.0f;
 
+    // Which correction sources feed moveForwardCell()'s differential
+    // correction (spec section 36 diagram: heading error / wall error ->
+    // differential correction). These say "does the source exist in this
+    // build at all" -- separate from allowWallCentering on
+    // moveForwardCell() itself, which says "is THIS move allowed to trust
+    // it". IMU heading hold has no maze dependency (yaw drift correction
+    // works on an open MOTION_TEST bench same as in a corridor), so it
+    // defaults on. ToF wall centering only means something with real
+    // walls on both sides -- leave off until WALL_KP/KI/KD are tuned
+    // (SETUP_NOTES.md section C); MotionTest can never pick it up
+    // regardless, since it never passes allowWallCentering=true.
+    constexpr bool ENABLE_IMU_HEADING_HOLD = true;
+    constexpr bool ENABLE_TOF_WALL_CENTERING = false;
+
+    // Clamp on the wall-centering PID's output, same role as
+    // HEADING_CORRECTION_LIMIT_MM_S. Kept separate since the two sources
+    // are summed and each needs its own ceiling -- an untuned ToF term
+    // shouldn't be able to swamp a working heading-hold term. TODO: tune
+    // once ENABLE_TOF_WALL_CENTERING is flipped on.
+    constexpr float WALL_CORRECTION_LIMIT_MM_S = 200.0f;
+
     constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
     constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms
 
