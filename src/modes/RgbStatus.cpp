@@ -39,6 +39,14 @@ namespace {
     bool blinkOn = false;
     uint32_t lastBlinkMs = 0;
 
+    // BOOT/INIT color-wheel state. Purely cosmetic (spec section 17's
+    // "short startup animation") -- no meaning attached to position or
+    // speed, just something visibly alive on the one pixel we have while
+    // self-check runs, distinct from every locked-mode color so it can't
+    // be mistaken for one.
+    uint8_t bootWheelPos = 0;
+    uint32_t lastBootStepMs = 0;
+
     void showSolid(Color c) { RGB::setColor(c.r, c.g, c.b); }
 
     void showBlinking(Color c, uint32_t nowMs) {
@@ -52,12 +60,37 @@ namespace {
             RGB::off();
         }
     }
+
+    // Classic 0-255 position -> RGB rainbow (red -> green -> blue -> red).
+    // No floating point, no HSV math -- three linear ramps.
+    Color wheel(uint8_t pos) {
+        pos = 255 - pos;
+        if (pos < 85) {
+            return {(uint8_t)(255 - pos * 3), 0, (uint8_t)(pos * 3)};
+        }
+        if (pos < 170) {
+            pos -= 85;
+            return {0, (uint8_t)(pos * 3), (uint8_t)(255 - pos * 3)};
+        }
+        pos -= 170;
+        return {(uint8_t)(pos * 3), (uint8_t)(255 - pos * 3), 0};
+    }
+
+    void showBootAnimation(uint32_t nowMs) {
+        if ((nowMs - lastBootStepMs) >= UserConfig::BOOT_ANIMATION_STEP_MS) {
+            lastBootStepMs = nowMs;
+            bootWheelPos++;  // uint8_t: wraps 255 -> 0, loop is automatic
+        }
+        showSolid(wheel(bootWheelPos));
+    }
 }
 
 namespace RgbStatus {
     void begin() {
         blinkOn = false;
         lastBlinkMs = millis();
+        bootWheelPos = 0;
+        lastBootStepMs = millis();
         RGB::off();
     }
 
@@ -68,8 +101,7 @@ namespace RgbStatus {
         switch (state) {
             case SystemState::BOOT:
             case SystemState::INIT:
-                // TODO: short startup animation (spec's "Booting" row).
-                RGB::off();
+                showBootAnimation(nowMs);
                 break;
 
             case SystemState::SETTING: {

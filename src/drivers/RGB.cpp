@@ -3,6 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #include "../config/BoardConfig.h"
+#include "../config/UserConfig.h"
 
 namespace {
     Adafruit_NeoPixel strip(Board::RGB_LED_COUNT, Board::PIN_RGB,
@@ -15,6 +16,9 @@ namespace {
 namespace RGB {
     void begin() {
         strip.begin();
+        // Global scale for every setColor() below -- see
+        // UserConfig::RGB_BRIGHTNESS for why this isn't just 255.
+        strip.setBrightness(UserConfig::RGB_BRIGHTNESS);
         strip.show();
         lastR = lastG = lastB = 0;
         initialized = true;

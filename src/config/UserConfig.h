@@ -30,6 +30,8 @@ namespace UserConfig {
     // color, no separate constant needed). First-pass placeholders --
     // adjust for visibility/colorblind-friendliness once the LED's on the
     // bench.
+    constexpr uint8_t RGB_BRIGHTNESS = 15;           // 0-255, global scale
+    constexpr uint16_t BOOT_ANIMATION_STEP_MS = 15;  // wheel advance rate
     constexpr uint8_t RGB_EXPLORE_R = 0, RGB_EXPLORE_G = 255,
                       RGB_EXPLORE_B = 0;  // green
     constexpr uint8_t RGB_FAST_RUN_R = 0, RGB_FAST_RUN_G = 0,

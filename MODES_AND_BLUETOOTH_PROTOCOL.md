@@ -21,11 +21,14 @@ explicit, requested action.**
 `RgbStatus` is the only module allowed to touch `RGB` directly -- it reads
 `ModeManager`/`SettingMode`/`StandbyMode` and translates that into color +
 blink. Colors are `UserConfig::RGB_*` constants (first-pass placeholders,
-tune once the LED's on the bench).
+tune once the LED's on the bench). `UserConfig::RGB_BRIGHTNESS` is a
+global scale applied once in `RGB::begin()` (0-255, default 60 -- a
+single WS2812B at 255 is uncomfortably bright close up); no other
+constant needs to change if you retune it.
 
 | SystemState | RGB |
 |---|---|
-| BOOT / INIT | off (TODO: startup animation, spec §17) |
+| BOOT / INIT | color-wheel animation (`bootWheelPos` advances every `UserConfig::BOOT_ANIMATION_STEP_MS`) -- purely cosmetic, no meaning attached to position/speed; ends automatically once `ModeManager` leaves BOOT/INIT, same tick the row below takes over |
 | SETTING | off until a gesture sequence matches this session, then solid selected-mode color |
 | LOCKED | solid locked-mode color (off if nothing's ever been locked yet) |
 | STANDBY, waiting for cover | selected-mode color, blinking |
