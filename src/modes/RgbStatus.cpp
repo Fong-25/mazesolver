@@ -94,6 +94,19 @@ namespace RgbStatus {
         RGB::off();
     }
 
+    void playBootAnimation(uint16_t durationMs) {
+        uint32_t startMs = millis();
+
+        bootWheelPos = 0;
+        lastBootStepMs = startMs;
+
+        while ((uint32_t)(millis() - startMs) < durationMs) {
+            showBootAnimation(millis());
+        }
+
+        RGB::off();
+    }
+
     void update(uint32_t nowMs) {
         using SystemState = ModeManager::SystemState;
         SystemState state = ModeManager::getState();

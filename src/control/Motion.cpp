@@ -33,12 +33,16 @@ namespace {
 
     // Same shape as headingHoldPid -- see combinedCorrection() for how its
     // target/measurement are set up to make the sign agree with it.
+    // Compiled out entirely when the feature is off -- see
+    // MAZESOLVER_COMPILE_TOF_WALL_CENTERING's comment in ControlConfig.h.
+#if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
     PID wallCenteringPid(ControlConfig::WALL_KP, ControlConfig::WALL_KI,
                          ControlConfig::WALL_KD,
                          -ControlConfig::WALL_CORRECTION_LIMIT_MM_S,
                          ControlConfig::WALL_CORRECTION_LIMIT_MM_S,
                          -ControlConfig::WALL_CORRECTION_LIMIT_MM_S,
                          ControlConfig::WALL_CORRECTION_LIMIT_MM_S);
+#endif
 
     // FORWARD_CELL state
     int32_t startLeftCount = 0, startRightCount = 0;
@@ -90,7 +94,9 @@ namespace {
         forwardCurrentSpeedMmS = 0.0f;
         forwardAllowWallCentering = allowWallCentering;
         headingHoldPid.reset();
+#if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
         wallCenteringPid.reset();
+#endif
         settling = false;
     }
 
@@ -109,6 +115,7 @@ namespace {
 
         if (ControlConfig::ENABLE_TOF_WALL_CENTERING &&
             forwardAllowWallCentering) {
+#if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
             using ToFManager::SensorRole;
             // Spec section 37: an invalid/very-large reading (open side,
             // no wall) must NOT be treated as a huge angular error --
@@ -131,6 +138,7 @@ namespace {
                 correction +=
                     wallCenteringPid.update(0.0f, rightMm - leftMm, dtSec);
             }
+#endif
         }
 
         return correction;

@@ -47,6 +47,15 @@ namespace ControlConfig {
     constexpr bool ENABLE_IMU_HEADING_HOLD = true;
     constexpr bool ENABLE_TOF_WALL_CENTERING = false;
 
+    // Preprocessor mirror of the flag above, kept in this one spot.
+    // Needed because a constexpr bool can gate runtime dead code (the
+    // ToF branch in Motion.cpp's combinedCorrection(), already stripped
+    // by -Os when false) but can't gate whether wallCenteringPid itself
+    // gets DECLARED -- that PID object costs 46 bytes of RAM merely by
+    // existing. With RAM this tight, a disabled feature shouldn't still
+    // pay rent for it. Flip both together when you're ready to tune it.
+#define MAZESOLVER_COMPILE_TOF_WALL_CENTERING 0
+
     // Clamp on the wall-centering PID's output, same role as
     // HEADING_CORRECTION_LIMIT_MM_S. Kept separate since the two sources
     // are summed and each needs its own ceiling -- an untuned ToF term

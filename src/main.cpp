@@ -35,8 +35,10 @@ void setup() {
 
     // --- Boot sequence, FIRMWARE_SPECS.md section 20 ---
     MotorDriver::begin();  // stops motor outputs (step 3) before anything
-                           // else can possibly command them
-    Encoder::begin();      // step 4
+    // else can possibly command them
+    RGB::begin();  // step 8
+    RgbStatus::begin();
+    Encoder::begin();  // step 4
 
     Wire.begin();  // step 5 -- shared bus, must happen exactly once, before
                    // either I2C device below
@@ -48,8 +50,6 @@ void setup() {
                                // moment
     }
 
-    RGB::begin();  // step 8
-    RgbStatus::begin();
     Button::begin();          // step 9
     DipSwitch::begin();       // step 10
     BatteryMonitor::begin();  // step 11
@@ -63,6 +63,7 @@ void setup() {
     // layer exists yet.
 
     Diagnostics::begin();
+    RgbStatus::playBootAnimation(1000);
     Safety::begin();  // arms the watchdog -- deliberately last of the
                       // slow/I2C inits above, so setup() itself doesn't
                       // eat into the 500ms margin before loop() starts
@@ -84,7 +85,7 @@ void setup() {
     if (!tofOk) Safety::triggerFault(Diagnostics::ErrorCode::TOF_INIT_FAILED);
     if (!imuOk) Safety::triggerFault(Diagnostics::ErrorCode::IMU_INIT_FAILED);
 
-        if (!MazePersistence::load()) {
+    if (!MazePersistence::load()) {
         Maze::reset();
     }
     ModeManager::begin();  // step 15 -- LOCKED (or ERROR, corrected on the

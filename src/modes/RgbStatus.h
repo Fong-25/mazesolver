@@ -8,6 +8,8 @@
 namespace RgbStatus {
     void begin();
 
+    void playBootAnimation(uint16_t durationMs);
+
     // Call every loop tick, unconditionally -- same pull-model pattern
     // SettingMode/StandbyMode use for their own inputs. Call AFTER
     // ModeManager::update() so it reads this tick's state, not last tick's.
