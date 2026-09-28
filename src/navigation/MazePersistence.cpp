@@ -3,6 +3,7 @@
 #include <EEPROM.h>
 
 #include "../config/MazeConfig.h"
+#include "../system/Safety.h"
 #include "Maze.h"
 
 namespace {
@@ -54,6 +55,7 @@ namespace MazePersistence {
         EEPROM.update(ADDR_VERSION, FORMAT_VERSION);
         EEPROM.update(ADDR_WIDTH, MazeConfig::WIDTH);
         EEPROM.update(ADDR_HEIGHT, MazeConfig::HEIGHT);
+        if (!Safety::isTripped()) Safety::kickWatchdog();
         for (uint8_t y = 0; y < MazeConfig::HEIGHT; y++) {
             for (uint8_t x = 0; x < MazeConfig::WIDTH; x++) {
                 EEPROM.update(ADDR_CELLS + (uint16_t)y * MazeConfig::WIDTH + x,

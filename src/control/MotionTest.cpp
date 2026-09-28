@@ -46,7 +46,9 @@ namespace {
             case TestKind::CRUISE:
             case TestKind::DECEL:
                 // Same primitive for all three -- see header TODO.
-                Motion::moveForwardCell();
+                Motion::moveForwardCell(
+                    ControlConfig::FORWARD_BASE_SPEED_MM_S,
+                    ControlConfig::MOTION_TEST_FORWARD_DISTANCE_MM);
                 break;
             case TestKind::TURNL:
                 Motion::turnLeft90();
@@ -62,12 +64,11 @@ namespace {
         }
     }
 
-    void finishRun() {
+    void endRun() {
         Motion::stop();
-        MotorControl::disable();
         runningAll = false;
         allIndex = 0;
-        phase = Phase::DONE;
+        phase = Phase::WAITING;
     }
 }
 
@@ -117,12 +118,12 @@ namespace MotionTest {
                 if (runningAll) {
                     allIndex++;
                     if (allIndex >= ALL_SEQUENCE_LEN) {
-                        finishRun();
+                        endRun();
                     } else {
                         startStep(ALL_SEQUENCE[allIndex]);
                     }
                 } else {
-                    finishRun();
+                    endRun();
                 }
                 break;
         }
