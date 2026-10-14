@@ -29,4 +29,15 @@ namespace Diagnostics {
     bool hasError();
 
     void clearError();  // explicit recovery action only, never automatic
+
+    // Boot self-check results, set once in main.cpp's setup() and never
+    // touched again. These exist so STATUS can report them ON DEMAND,
+    // any time something connects -- the BOOT OK/TOF OK/IMU OK lines
+    // printed during setup() are easy to miss over Bluetooth (HC-06 and
+    // a reconnecting terminal both need real time after power-up, which
+    // setup() doesn't wait for). Query STATUS instead of racing to catch
+    // the live boot text.
+    void setSelfCheck(bool tofOk, bool imuOk);
+    bool tofSelfCheckOk();
+    bool imuSelfCheckOk();
 }

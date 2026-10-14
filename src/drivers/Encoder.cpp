@@ -1,11 +1,39 @@
 #include "Encoder.h"
 
+#include <avr/io.h>
 #include <math.h>
 
 #include "../config/BoardConfig.h"
 #include "../config/RobotConfig.h"
 
 namespace {
+    // Direct PORTD reads replace digitalRead() in the ISRs below -- at
+    // MAX_LINEAR_SPEED_MM_S each wheel's ISR can fire ~10k times/sec, and
+    // digitalRead()'s flash-table lookup costs ~1us per call vs. one
+    // single-cycle port read. This hardcodes the pin<->bit mapping, so if
+    // BoardConfig ever moves these pins, this must change too -- these
+    // static_asserts make that a build failure instead of a silent wrong
+    // reading.
+    static_assert(Board::PIN_LEFT_ENC_A == 2 && Board::PIN_LEFT_ENC_B == 3,
+                  "left encoder PORTD bit math assumes D2/D3 -- update "
+                  "readLeftEncoderState() if these pins change");
+    static_assert(Board::PIN_RIGHT_ENC_A == 4 && Board::PIN_RIGHT_ENC_B == 7,
+                  "right encoder PORTD bit math assumes D4/D7 -- update "
+                  "readRightEncoderState() if these pins change");
+
+    // Bit layout: state convention is (A<<1 | B).
+    // Left: A=D2=PIND bit2, B=D3=PIND bit3 (adjacent).
+    inline uint8_t readLeftEncoderState() {
+        uint8_t pins = PIND;
+        return ((pins >> 1) & 0x02) | ((pins >> 3) & 0x01);
+    }
+
+    // Right: A=D4=PIND bit4, B=D7=PIND bit7 (not adjacent).
+    inline uint8_t readRightEncoderState() {
+        uint8_t pins = PIND;
+        return ((pins >> 3) & 0x02) | ((pins >> 7) & 0x01);
+    }
+
     volatile int32_t leftCount = 0;
     volatile int32_t rightCount = 0;
 
@@ -26,18 +54,14 @@ namespace {
                                    -1, 0,  0,  +1, 0,  +1, -1, 0};
 
     inline void decodeLeft() {
-        uint8_t a = digitalRead(Board::PIN_LEFT_ENC_A);
-        uint8_t b = digitalRead(Board::PIN_LEFT_ENC_B);
-        uint8_t newState = (a << 1) | b;
+        uint8_t newState = readLeftEncoderState();
         int8_t delta = QUAD_TABLE[(leftState << 2) | newState];
         leftCount += RobotConfig::LEFT_ENCODER_REVERSED ? -delta : delta;
         leftState = newState;
     }
 
     inline void decodeRight() {
-        uint8_t a = digitalRead(Board::PIN_RIGHT_ENC_A);
-        uint8_t b = digitalRead(Board::PIN_RIGHT_ENC_B);
-        uint8_t newState = (a << 1) | b;
+        uint8_t newState = readRightEncoderState();
         int8_t delta = QUAD_TABLE[(rightState << 2) | newState];
         rightCount += RobotConfig::RIGHT_ENCODER_REVERSED ? -delta : delta;
         rightState = newState;
@@ -60,10 +84,8 @@ namespace Encoder {
         pinMode(Board::PIN_RIGHT_ENC_A, INPUT_PULLUP);
         pinMode(Board::PIN_RIGHT_ENC_B, INPUT_PULLUP);
 
-        leftState = (digitalRead(Board::PIN_LEFT_ENC_A) << 1) |
-                    digitalRead(Board::PIN_LEFT_ENC_B);
-        rightState = (digitalRead(Board::PIN_RIGHT_ENC_A) << 1) |
-                     digitalRead(Board::PIN_RIGHT_ENC_B);
+        leftState = readLeftEncoderState();
+        rightState = readRightEncoderState();
 
         attachInterrupt(digitalPinToInterrupt(Board::PIN_LEFT_ENC_A), leftISR,
                         CHANGE);
@@ -90,14 +112,17 @@ namespace Encoder {
 
         float leftMmPerCount = (PI * RobotConfig::LEFT_WHEEL_DIAMETER_MM) /
                                RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+
         float rightMmPerCount = (PI * RobotConfig::RIGHT_WHEEL_DIAMETER_MM) /
                                 RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
+
         float dtSec = dt / 1000.0f;
         float leftSpeedMmS = (leftDelta * leftMmPerCount) / dtSec;
         float rightSpeedMmS = (rightDelta * rightMmPerCount) / dtSec;
 
         float limit = RobotConfig::MAX_LINEAR_SPEED_MM_S *
                       RobotConfig::ENCODER_GLITCH_SAFETY_MARGIN;
+
         if (fabs(leftSpeedMmS) > limit || fabs(rightSpeedMmS) > limit) {
             glitchFlag = true;
         }

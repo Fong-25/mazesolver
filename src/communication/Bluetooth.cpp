@@ -172,6 +172,13 @@ namespace {
         Serial.print(Safety::isTripped() ? 1 : 0);
         Serial.print(F(" err="));
         Serial.print((uint8_t)Diagnostics::getError());
+        // Self-check results from boot, persisted precisely so this is
+        // queryable whenever Bluetooth actually connects, instead of
+        // needing to catch the one-shot boot-time prints live.
+        Serial.print(F(" tof="));
+        Serial.print(Diagnostics::tofSelfCheckOk() ? F("OK") : F("FAIL"));
+        Serial.print(F(" imu="));
+        Serial.print(Diagnostics::imuSelfCheckOk() ? F("OK") : F("FAIL"));
         Serial.print(F(" spdL="));
         Serial.print(MotorControl::getMeasuredLeftSpeedMmS());
         Serial.print(F(" spdR="));

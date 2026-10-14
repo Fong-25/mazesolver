@@ -3,7 +3,9 @@
 #include <avr/wdt.h>
 
 #include "communication/Bluetooth.h"
+#include "config/BoardConfig.h"
 #include "config/ControlConfig.h"
+#include "config/RobotConfig.h"
 #include "control/MotorControl.h"
 #include "control/PoseEstimator.h"
 #include "drivers/BatteryMonitor.h"
@@ -33,6 +35,32 @@ void setup() {
     MCUSR = 0;
     wdt_disable();
 
+    // Mitigation for a leaky power switch (see TUNING_GUIDE.md "Dirty
+    // boot"): sample the battery divider directly and require several
+    // CONSECUTIVE readings above a sane threshold before doing anything
+    // else. This catches a slow/noisy voltage ramp on switch-on; it does
+    // NOT replace fixing BOD -- if VCC genuinely never drops below the
+    // chip's own internal POR threshold between power cycles, no code
+    // running after that point can be trusted to detect it, this loop
+    // included. No watchdog is armed yet, so this can't trigger a reset
+    // by sitting here.
+    pinMode(Board::PIN_BATTERY_ADC, INPUT);
+    uint8_t stableCount = 0;
+    while (stableCount < 5) {
+        int raw = analogRead(Board::PIN_BATTERY_ADC);
+        float adcV = raw * Board::ADC_REFERENCE_V / Board::ADC_MAX_COUNTS;
+        float battV =
+            adcV *
+            (Board::BATTERY_DIVIDER_R1_OHM + Board::BATTERY_DIVIDER_R2_OHM) /
+            Board::BATTERY_DIVIDER_R2_OHM;
+        if (battV >= RobotConfig::BATTERY_LOW_VOLTAGE) {
+            stableCount++;
+        } else {
+            stableCount = 0;
+        }
+        delay(10);
+    }
+
     // --- Boot sequence, FIRMWARE_SPECS.md section 20 ---
     MotorDriver::begin();  // stops motor outputs (step 3) before anything
     // else can possibly command them
@@ -55,6 +83,11 @@ void setup() {
     BatteryMonitor::begin();  // step 11
     Bluetooth::begin();       // step 12 -- Serial is live from here on
 
+    // Persisted for STATUS -- see Diagnostics.h. The prints below are
+    // still useful over a wired USB serial monitor (no connect delay
+    // there), but DON'T rely on catching them over Bluetooth: send
+    // STATUS once connected instead, any time after boot.
+    Diagnostics::setSelfCheck(tofOk, imuOk);
     Serial.println(F("BOOT OK"));
     Serial.println(tofOk ? F("TOF OK") : F("TOF FAIL"));
     Serial.println(imuOk ? F("IMU OK") : F("IMU FAIL"));
