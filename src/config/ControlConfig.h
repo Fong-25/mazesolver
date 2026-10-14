@@ -75,6 +75,13 @@ namespace ControlConfig {
     // confirmed stable; raise this incrementally, don't jump straight to
     // whatever the motors can physically do.
     constexpr float FAST_RUN_SPEED_MM_S = 500.0f;
+
+    // DIAGNOSTIC's raw MOTOR commands have no closed loop and no isDone()
+    // -- without this, a motor commanded once and then forgotten (lost
+    // connection, distraction, the session left running) stays at that
+    // PWM indefinitely. Diagnostics::ErrorCode::MOTOR_TIMEOUT already
+    // existed in the enum but nothing ever triggered it; this is that.
+    constexpr uint32_t DIAGNOSTIC_MOTOR_TIMEOUT_MS = 3000;
     // Clamp on the heading-hold PID's output -- added to/subtracted from
     // FORWARD_BASE_SPEED_MM_S per wheel, so this is how hard a straight
     // segment will fight to correct a heading error.

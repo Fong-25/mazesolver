@@ -124,6 +124,15 @@ explicit command, never autonomously.
 DIAGNOSTIC, run `LOG E`, then `MOTOR L 100` — watch the terminal to confirm
 direction and encoder sign together in real time.
 
+**Motor timeout:** a motor keeps running at whatever PWM it was last set
+to -- DIAGNOSTIC has no closed loop watching it. If no `MOTOR` command of
+any kind (including `STOP`/`BRAKE`) arrives within
+`ControlConfig::DIAGNOSTIC_MOTOR_TIMEOUT_MS` (3000 ms), both motors stop
+automatically and `Diagnostics::ErrorCode::MOTOR_TIMEOUT` trips -- a
+session you walk away from or lose connection to doesn't leave a wheel
+spinning. Resend a fresh `MOTOR` command (or re-enter the mode) to keep
+driving past that window.
+
 ## Mode 3 — DEBUG_LOG
 
 Purpose: stream requested telemetry channels over Bluetooth. Tuning/config

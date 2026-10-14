@@ -14,6 +14,13 @@
 // Now a MOTOR request is only ever queued by Bluetooth, and only
 // actually applied here, while genuinely inside DIAGNOSTIC's own
 // RUNNING session.
+//
+// Also enforces ControlConfig::DIAGNOSTIC_MOTOR_TIMEOUT_MS: no MOTOR
+// command (any kind) for that long auto-stops and trips
+// Diagnostics::ErrorCode::MOTOR_TIMEOUT. DIAGNOSTIC has no closed loop
+// and no isDone() -- without this, a command sent once and then
+// forgotten (lost connection, distraction) would drive a motor
+// indefinitely.
 namespace Diagnostic {
     void begin();
     void update(uint32_t nowMs);
