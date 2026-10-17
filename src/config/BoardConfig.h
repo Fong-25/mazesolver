@@ -32,7 +32,7 @@ namespace Board {
     // BATTERY
     constexpr uint8_t PIN_BATTERY_ADC = A7;
     constexpr float BATTERY_DIVIDER_R1_OHM = 10000.0f;
-    constexpr float BATTERY_DIVIDER_R2_OHM = 6800.0f;
+    constexpr float BATTERY_DIVIDER_R2_OHM = 4700.0f;
     constexpr float ADC_REFERENCE_V = 5.0f;
     constexpr uint16_t ADC_MAX_COUNTS = 1023;
 

@@ -22,10 +22,10 @@ namespace SensorConfig {
     // average) as the reference, then offset[i] = reference - raw[i].
     // All zero until measured -- confirmed non-uniform on the bench
     // (e.g. two agreeing, one under-reading, one over-reading by ~10mm).
-    constexpr int16_t TOF_OFFSET_MM_1 = 0;
-    constexpr int16_t TOF_OFFSET_MM_2 = 0;
-    constexpr int16_t TOF_OFFSET_MM_3 = 0;
-    constexpr int16_t TOF_OFFSET_MM_4 = 0;
+    constexpr int16_t TOF_OFFSET_MM_1 = -20;
+    constexpr int16_t TOF_OFFSET_MM_2 = -20;
+    constexpr int16_t TOF_OFFSET_MM_3 = 10;
+    constexpr int16_t TOF_OFFSET_MM_4 = 30;
 
     // Diagonal sensors are mounted at an angle to the robot's
     // forward-travel axis, not pointing straight sideways -- their raw

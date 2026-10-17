@@ -452,10 +452,10 @@ namespace Bluetooth {
         while (Serial.available() > 0) {
             char c = (char)Serial.read();
 
-            Serial.print(F("["));
-            Serial.print(F("0x"));
-            Serial.print((uint8_t)c, HEX);
-            Serial.print(F("]"));
+            // Serial.print(F("["));
+            // Serial.print(F("0x"));
+            // Serial.print((uint8_t)c, HEX);
+            // Serial.print(F("]"));
 
             if (c == '\n' || c == '\r') {
                 if (lineLength > 0) {

@@ -10,6 +10,7 @@ namespace {
     // Updated on every consumed MOTOR request; see update()'s timeout
     // check below.
     uint32_t lastMotorCommandMs = 0;
+    bool motorCommandActive = false;
 }
 
 namespace Diagnostic {
@@ -21,7 +22,9 @@ namespace Diagnostic {
         // Starts the timeout clock fresh: a session that's entered but
         // never sent a single MOTOR command still trips on schedule
         // rather than sitting silently un-armed.
-        lastMotorCommandMs = millis();
+        // lastMotorCommandMs = millis();
+        lastMotorCommandMs = 0;
+        motorCommandActive = false;
     }
 
     void update(uint32_t nowMs) {
@@ -29,6 +32,7 @@ namespace Diagnostic {
         int16_t pwm;
         if (Bluetooth::consumeMotorRequest(action, pwm)) {
             lastMotorCommandMs = nowMs;
+            motorCommandActive = true;
 
             switch (action) {
                 case Bluetooth::MotorAction::SET_LEFT:
@@ -52,9 +56,11 @@ namespace Diagnostic {
         // stop driving and trip a real fault rather than silently coast.
         // Safety::trip() is idempotent (first cause wins), so this is
         // safe to call every tick once past the deadline.
-        if ((nowMs - lastMotorCommandMs) >=
-            ControlConfig::DIAGNOSTIC_MOTOR_TIMEOUT_MS) {
+        if (motorCommandActive &&
+            (nowMs - lastMotorCommandMs) >=
+                ControlConfig::DIAGNOSTIC_MOTOR_TIMEOUT_MS) {
             MotorDriver::stopAll();
+            motorCommandActive = false;
             Safety::triggerFault(Diagnostics::ErrorCode::MOTOR_TIMEOUT);
         }
     }
