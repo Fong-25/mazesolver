@@ -2,6 +2,7 @@
 
 #include "../communication/Bluetooth.h"
 #include "../config/ControlConfig.h"
+#include "../control/MotorControl.h"
 #include "../drivers/MotorDriver.h"
 #include "../system/Diagnostics.h"
 #include "../system/Safety.h"
@@ -15,16 +16,13 @@ namespace {
 
 namespace Diagnostic {
     void begin() {
-        // Nothing to arm -- DIAGNOSTIC drives MotorDriver directly, not
-        // through MotorControl, so there's no enable()/disable() pairing
-        // needed the way Explorer/FastRun/MotionTest have.
-        //
         // Starts the timeout clock fresh: a session that's entered but
         // never sent a single MOTOR command still trips on schedule
         // rather than sitting silently un-armed.
         // lastMotorCommandMs = millis();
         lastMotorCommandMs = 0;
         motorCommandActive = false;
+        MotorControl::setExternalDrive(true);
     }
 
     void update(uint32_t nowMs) {
@@ -67,5 +65,8 @@ namespace Diagnostic {
 
     bool isDone() { return false; }
 
-    void abort() { MotorDriver::stopAll(); }
+    void abort() {
+        MotorControl::setExternalDrive(false);
+        MotorDriver::stopAll();
+    }
 }

@@ -23,4 +23,9 @@ namespace MotorControl {
 
     int16_t getLastLeftPwm();
     int16_t getLastRightPwm();
+
+    // While true, update() still measures wheel speed but never writes
+    // motor outputs (DIAGNOSTIC drives MotorDriver directly).
+    // disable() clears it, so any Safety trip returns ownership.
+    void setExternalDrive(bool on);
 }

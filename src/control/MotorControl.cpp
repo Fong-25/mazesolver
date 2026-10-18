@@ -37,6 +37,7 @@ namespace {
 
     int16_t lastLeftPwm = 0, lastRightPwm = 0;
     bool enabled = true;
+    bool externalDrive = false;
 
     int16_t applyDeadband(float pwmFloat, float targetSpeed) {
         int16_t pwm = (int16_t)pwmFloat;
@@ -89,6 +90,11 @@ namespace MotorControl {
         measuredLeftMmS = (leftDelta * MM_PER_COUNT_LEFT) / dtSec;
         measuredRightMmS = (rightDelta * MM_PER_COUNT_RIGHT) / dtSec;
 
+        if (externalDrive) {
+            // Someone else own the motors pins
+            return;
+        }
+
         if (!enabled) {
             lastLeftPwm = lastRightPwm = 0;
             MotorDriver::stopAll();
@@ -115,10 +121,13 @@ namespace MotorControl {
 
     void disable() {
         enabled = false;
+        externalDrive = false;
         leftPid.reset();
         rightPid.reset();
         MotorDriver::stopAll();
     }
+
+    void setExternalDrive(bool on) { externalDrive = on; }
 
     void setLeftGains(float kp, float ki, float kd) {
         leftPid.setGains(kp, ki, kd);

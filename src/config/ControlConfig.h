@@ -12,7 +12,7 @@ namespace ControlConfig {
 
     // Minimum PWM needed to actually overcome static friction and move —
     // per spec section 10.2. TODO: measure empirically (see SETUP_NOTES.md).
-    constexpr int16_t MOTOR_DEADBAND_PWM = 30;
+    constexpr int16_t MOTOR_DEADBAND_PWM = 40;
 
     // WHEEL VELOCITY
     constexpr float LEFT_KP = 1.0f;
