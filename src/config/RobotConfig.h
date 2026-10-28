@@ -17,11 +17,11 @@ namespace RobotConfig {
 
     // MECHANICAL GEOMETRY
     constexpr float LEFT_WHEEL_DIAMETER_MM =
-        33.56f;  // TODO: measure independently
+        33.56f;  // OK TODO: measure independently
     constexpr float RIGHT_WHEEL_DIAMETER_MM =
-        34.22f;  // TODO: measure independently
+        34.22f;  // OK TODO: measure independently
 
-    constexpr float WHEEL_BASE_MM = 86.0f;  // TODO: confirm
+    constexpr float WHEEL_BASE_MM = 81.72f;  // OK TODO: confirm
     // WHEEL_TRACK_MM is unused currently
     constexpr float WHEEL_TRACK_MM = 72.0f;  // TODO: confirm
 
