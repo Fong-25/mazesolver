@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "skills": {
+    "arduino-workflow-router": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/arduino-workflow-router/SKILL.md",
+      "computedHash": "b248dcbf4e2e8c2907f3bf9d9da0e0b3ffc6a1c80e38d9919aa41cf02fba3ccb"
+    },
+    "code-review-facilitator": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-facilitator/SKILL.md",
+      "computedHash": "efbcbaaa7f0a99807dde8a3bfe1ac0729c7731aafafd87cc77233cae80e487f0"
+    },
+    "code-simplification-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-simplification-embedded/SKILL.md",
+      "computedHash": "4ceaa8687e4d87d92c625d8b70cd71f474d1fcc9492b8b2a7cf9b25d5b2353e9"
+    },
+    "grilling-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grilling-embedded/SKILL.md",
+      "computedHash": "47f4f366d71cfd5d5b85c70ad4da7b6e8959a8d69c18c14e40b52e9ba9633853"
+    },
+    "hardware-tdd": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/hardware-tdd/SKILL.md",
+      "computedHash": "d0226657a72549a76db087acea4804fbef2008d9eb0178ce39d0c936c6bb02f6"
+    },
+    "implement-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/implement-embedded/SKILL.md",
+      "computedHash": "84a2dc293e41f26300d72ebddb7e0fb54ce59c10769dc8635649911c5d6e0b90"
+    },
+    "library-selection": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/library-selection/SKILL.md",
+      "computedHash": "0431ab39e6c9f6305b5cadaa9332fb685af272a1322ed84cb769afb67c901513"
+    },
+    "memory-budgeting": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/memory-budgeting/SKILL.md",
+      "computedHash": "653ff16ee60ec316c450f2aa5407de51033dc2da318b496a7c7b4c1c20ee2af7"
+    },
+    "memory-optimization-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/memory-optimization-embedded/SKILL.md",
+      "computedHash": "0782abd4b254613a51c7b1b9c274472d9a6f73da2fc90d7ceb558272d5bcca3b"
+    },
+    "non-blocking-patterns": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/non-blocking-patterns/SKILL.md",
+      "computedHash": "e993caa0e7f51c029553ff86d1f51e1f49072c1481503a8da9f461e7d514f28d"
+    },
+    "rethink-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/rethink-embedded/SKILL.md",
+      "computedHash": "d8f262e82bfa274f63b479e02b90cdc68d8e6c90865cc9622a19becc9659ab91"
+    },
+    "review-embedded": {
+      "source": "iharhl/embedded-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-embedded/SKILL.md",
+      "computedHash": "7ee6d39bbddd858b3084dfff80a0031dab7b1bd3ee13bbaf2f719509fcdaea95"
+    }
+  }
+}
