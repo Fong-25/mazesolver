@@ -22,8 +22,8 @@ Order matters. Each phase depends on the one before it. Do not skip ahead.
 4. Leave with `EXIT`, then a short button press -> LOCKED.
 
 ## Phase 0 - Boot, comms, power
-- **0.1 Boot.** ~1 s rainbow, then serial `BOOT OK`, `TOF OK`, `IMU OK`,
-  `READY`. `TOF FAIL`/`IMU FAIL` = red; check I2C wiring, XSHUT pins,
+- **0.1 Boot.** ~1 s rainbow, then serial `OK`, `READY`. A `TOF FAIL` or
+  `IMU FAIL` line means red; check I2C wiring, XSHUT pins,
   addresses. Keep the robot **still** during boot (gyro bias calibration).
 - **0.2 HC-06 baud.** HC-06 defaults to 9600. Set it to 115200 (`AT+BAUD8`)
   or change `UserConfig::BLUETOOTH_BAUD`. Test `PING` -> `PONG`, `STATUS`.

@@ -234,6 +234,50 @@ namespace {
         }
     }
 
+    // Minimal decimal parser for PID gains. Replaces atof()/strtod(), which
+    // pull in ~680 B of flash we don't have to spare. Accepts an optional
+    // sign, digits and one decimal point; returns 0 for malformed input
+    // (same result atof() gives). No exponent/NaN/Inf support -- the PID
+    // tuning command never needs them.
+    float parseGain(const char* s) {
+        if (s == nullptr) return 0.0f;
+
+        while (*s == ' ') s++;
+
+        bool negative = false;
+        if (*s == '+' || *s == '-') {
+            negative = (*s == '-');
+            s++;
+        }
+
+        float value = 0.0f;
+        float scale = 0.1f;
+        bool anyDigit = false;
+        bool afterPoint = false;
+        for (; *s != '\0'; s++) {
+            char c = *s;
+            if (c >= '0' && c <= '9') {
+                anyDigit = true;
+                if (afterPoint) {
+                    value += (float)(c - '0') * scale;
+                    scale *= 0.1f;
+                } else {
+                    value = value * 10.0f + (float)(c - '0');
+                }
+            } else if (c == '.' && !afterPoint) {
+                afterPoint = true;
+            } else {
+                break;
+            }
+        }
+
+        if (!anyDigit) return 0.0f;
+        // Reject exponent notation rather than silently truncating it to the
+        // mantissa (e.g. "1e-3" -> 1, a dangerously wrong PID gain).
+        if (*s == 'e' || *s == 'E') return 0.0f;
+        return negative ? -value : value;
+    }
+
     void handlePidCommand(char* rest) {
         char* savePtr = nullptr;
         char* side = strtok_r(rest, " ", &savePtr);
@@ -252,7 +296,9 @@ namespace {
             return;
         }
 
-        float kp = atof(kpStr), ki = atof(kiStr), kd = atof(kdStr);
+        float kp = parseGain(kpStr);
+        float ki = parseGain(kiStr);
+        float kd = parseGain(kdStr);
 
         if (strcasecmp(side, "L") == 0) {
             MotorControl::setLeftGains(kp, ki, kd);

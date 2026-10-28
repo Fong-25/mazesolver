@@ -32,8 +32,9 @@ namespace Diagnostics {
 
     // Boot self-check results, set once in main.cpp's setup() and never
     // touched again. These exist so STATUS can report them ON DEMAND,
-    // any time something connects -- the BOOT OK/TOF OK/IMU OK lines
-    // printed during setup() are easy to miss over Bluetooth (HC-06 and
+    // any time something connects -- the boot self-check lines printed
+    // during setup() (a bare OK, plus TOF FAIL/IMU FAIL only when a sensor
+    // failed) are easy to miss over Bluetooth (HC-06 and
     // a reconnecting terminal both need real time after power-up, which
     // setup() doesn't wait for). Query STATUS instead of racing to catch
     // the live boot text.

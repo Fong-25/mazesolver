@@ -89,9 +89,12 @@ void setup() {
     // there), but DON'T rely on catching them over Bluetooth: send
     // STATUS once connected instead, any time after boot.
     Diagnostics::setSelfCheck(tofOk, imuOk);
-    Serial.println(F("BOOT OK"));
-    Serial.println(tofOk ? F("TOF OK") : F("TOF FAIL"));
-    Serial.println(imuOk ? F("IMU OK") : F("IMU FAIL"));
+    if (tofOk && imuOk) {
+        Serial.println(F("OK"));
+    } else {
+        if (!tofOk) Serial.println(F("TOF FAIL"));
+        if (!imuOk) Serial.println(F("IMU FAIL"));
+    }
 
     // Step 13, load persistent maze/config data: TODO, no persistence
     // layer exists yet.
