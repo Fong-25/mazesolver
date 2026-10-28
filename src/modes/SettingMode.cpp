@@ -5,8 +5,12 @@
 #include "../drivers/Encoder.h"
 
 namespace {
-    int32_t referenceCount = 0;
-    uint32_t lastGestureMs = 0;
+
+    // uint32_t lastGestureMs = 0;
+    int32_t referenceCount =
+        0;  // wheel count at the start of the current stroke
+    int32_t lastSeenCount = 0;  // last count at which the wheel was seen moving
+    uint32_t lastMoveMs = 0;    // last time the wheel moved
 
     UserConfig::WheelGesture buffer[UserConfig::MODE_SEQUENCE_LENGTH];
     uint8_t bufferLength = 0;
@@ -58,37 +62,44 @@ namespace SettingMode {
     void begin() { reset(); }
 
     void reset() {
-        referenceCount = currentWheelCount();
+        referenceCount = lastSeenCount = currentWheelCount();
         bufferLength = 0;
-        lastGestureMs = millis();
+        lastMoveMs = millis();
         selectedModeIndex = -1;
     }
 
+    // A gesture is one STROKE: the wheel moves, then pauses. Direction and
+    // size are judged when it pauses, not the instant a threshold is
+    // crossed, so overshoot, a half turn, or a sloppy quarter turn all
+    // count as exactly one gesture and nothing carries into the next one.
     void update(uint32_t nowMs) {
-        // Gesture timeout: too long since the last movement -> discard
-        // whatever partial sequence was in progress.
-        if (bufferLength > 0 &&
-            (nowMs - lastGestureMs) > UserConfig::MODE_GESTURE_TIMEOUT_MS) {
-            bufferLength = 0;
+        int32_t current = currentWheelCount();
+
+        int32_t moved = current - lastSeenCount;
+        if (moved > (int32_t)UserConfig::MODE_GESTURE_MOTION_EPS_COUNTS ||
+            moved < -(int32_t)UserConfig::MODE_GESTURE_MOTION_EPS_COUNTS) {
+            lastSeenCount = current;
+            lastMoveMs = nowMs;
         }
 
-        int32_t current = currentWheelCount();
-        int32_t delta = current - referenceCount;
-        int32_t minCounts = (int32_t)RobotConfig::MODE_GESTURE_MIN_COUNTS;
+        uint32_t idleMs = nowMs - lastMoveMs;
+        if (idleMs < UserConfig::MODE_GESTURE_SETTLE_MS) return;  // mid-stroke
 
+        int32_t delta = lastSeenCount - referenceCount;
+        int32_t minCounts = (int32_t)RobotConfig::MODE_GESTURE_MIN_COUNTS;
         if (delta >= minCounts || delta <= -minCounts) {
             UserConfig::WheelGesture gesture =
                 (delta > 0) ? UserConfig::WheelGesture::FORWARD
                             : UserConfig::WheelGesture::BACKWARD;
-
             if (bufferLength < UserConfig::MODE_SEQUENCE_LENGTH) {
                 buffer[bufferLength++] = gesture;
             }
-
-            referenceCount = current;  // next gesture measured fresh from here
-            lastGestureMs = nowMs;
-
             checkForMatch();
+        }
+        referenceCount = lastSeenCount;  // next stroke measured fresh
+
+        if (bufferLength > 0 && idleMs > UserConfig::MODE_GESTURE_TIMEOUT_MS) {
+            bufferLength = 0;
         }
     }
 

@@ -183,8 +183,7 @@ wall, one open side)
 - **UX:** `BUTTON_DEBOUNCE_MS`, `BUTTON_LONG_PRESS_MS`, `DIP_DEBOUNCE_MS`,
   `STANDBY_BLINK_INTERVAL_MS`, `RGB_BRIGHTNESS`, `BOOT_ANIMATION_STEP_MS`,
   all `RGB_*` colors, `MODE_SEQUENCES`, `MODE_GESTURE_TIMEOUT_MS`.
-  Gestures turn the LEFT wheel >= a quarter revolution per step, so recheck
-  them after Phase 2.
+  Gestures turn the LEFT wheel >= one stroke of at least 1/8 revolution, then a ≥150 ms pause
 - **Other:** `LOG_STREAM_INTERVAL_MS`, `TOF_POLL_INTERVAL_MS`,
   `WHEEL_PID_DERIVATIVE_FILTER_ALPHA`, `ENCODER_GLITCH_SAFETY_MARGIN`.
 

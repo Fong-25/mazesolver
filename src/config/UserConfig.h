@@ -87,4 +87,7 @@ namespace UserConfig {
         sizeof(MODE_SEQUENCES) / sizeof(MODE_SEQUENCES[0]);
 
     constexpr uint32_t MODE_GESTURE_TIMEOUT_MS = 2000;
+    constexpr uint32_t MODE_GESTURE_SETTLE_MS =
+        150;  // pause that ends a stroke
+    constexpr uint16_t MODE_GESTURE_MOTION_EPS_COUNTS = 2;  // standstill jitter
 }

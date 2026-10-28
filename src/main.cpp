@@ -6,6 +6,7 @@
 #include "config/BoardConfig.h"
 #include "config/ControlConfig.h"
 #include "config/RobotConfig.h"
+#include "control/Motion.h"
 #include "control/MotorControl.h"
 #include "control/PoseEstimator.h"
 #include "drivers/BatteryMonitor.h"
@@ -136,6 +137,7 @@ void loop() {
     Safety::update(nowUs);
 
     if (scheduler.controlReady(nowUs)) {
+        Motion::update(nowUs);  // arms -> sets wheel targets; no-op when idle
         MotorControl::update(nowUs);
         PoseEstimator::update(nowUs);
     }

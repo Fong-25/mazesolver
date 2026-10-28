@@ -7,7 +7,7 @@ namespace RobotConfig {
     constexpr bool LEFT_MOTOR_REVERSED = false;
     constexpr bool RIGHT_MOTOR_REVERSED = false;
 
-    constexpr bool LEFT_ENCODER_REVERSED = false;
+    constexpr bool LEFT_ENCODER_REVERSED = true;
     constexpr bool RIGHT_ENCODER_REVERSED = false;
 
     // How much headroom before a measured speed is treated as a sensor glitch
@@ -17,9 +17,9 @@ namespace RobotConfig {
 
     // MECHANICAL GEOMETRY
     constexpr float LEFT_WHEEL_DIAMETER_MM =
-        34.0f;  // TODO: measure independently
+        33.56f;  // TODO: measure independently
     constexpr float RIGHT_WHEEL_DIAMETER_MM =
-        34.05f;  // TODO: measure independently
+        34.22f;  // TODO: measure independently
 
     constexpr float WHEEL_BASE_MM = 86.0f;  // TODO: confirm
     // WHEEL_TRACK_MM is unused currently
@@ -96,6 +96,9 @@ namespace RobotConfig {
     constexpr bool MODE_SELECT_USE_LEFT_WHEEL = true;
 
     // Quarter wheel revolution per gesture
+    // constexpr float MODE_GESTURE_MIN_COUNTS =
+    //     ENCODER_COUNTS_PER_OUTPUT_REV / 4.0f;
+    // Minimum stroke (1/8 wheel revolution) that counts as one gesture
     constexpr float MODE_GESTURE_MIN_COUNTS =
-        ENCODER_COUNTS_PER_OUTPUT_REV / 4.0f;
+        ENCODER_COUNTS_PER_OUTPUT_REV / 8.0f;
 }
