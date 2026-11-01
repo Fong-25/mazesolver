@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "../config/MazeConfig.h"
+#include "../config/RobotConfig.h"
 #include "../config/UserConfig.h"
 #include "../control/MotorControl.h"
 #include "../control/PoseEstimator.h"
@@ -447,6 +448,9 @@ namespace {
 
     void serviceLogStream(uint32_t nowMs) {
         if (logMask == 0) return;
+        // if ((nowMs - lastLogMs) < UserConfig::LOG_STREAM_INTERVAL_MS) return;
+        // lastLogMs = nowMs;
+
         if ((nowMs - lastLogMs) < UserConfig::LOG_STREAM_INTERVAL_MS) return;
         lastLogMs = nowMs;
 

@@ -15,12 +15,12 @@ namespace ControlConfig {
     constexpr int16_t MOTOR_DEADBAND_PWM = 40;
 
     // WHEEL VELOCITY
-    constexpr float LEFT_KP = 1.0f;
-    constexpr float LEFT_KI = 0.0f;
+    constexpr float LEFT_KP = 2.2f;
+    constexpr float LEFT_KI = 1.5f;
     constexpr float LEFT_KD = 0.0f;
 
-    constexpr float RIGHT_KP = 1.0f;
-    constexpr float RIGHT_KI = 0.0f;
+    constexpr float RIGHT_KP = 2.2f;
+    constexpr float RIGHT_KI = 1.5f;
     constexpr float RIGHT_KD = 0.0f;
 
     // HEADING

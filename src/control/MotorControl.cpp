@@ -101,10 +101,20 @@ namespace MotorControl {
             return;
         }
 
-        float leftOutput =
-            leftPid.update(targetLeftMmS, measuredLeftMmS, dtSec);
-        float rightOutput =
-            rightPid.update(targetRightMmS, measuredRightMmS, dtSec);
+        // Standstill with nothing commanded: drop the integrator so the
+        // leftover braking-phase I-term can't hold a hum on a stopped wheel.
+        float leftOutput = 0.0f;
+        if (targetLeftMmS == 0.0f && measuredLeftMmS == 0.0f)
+            leftPid.reset();
+        else
+            leftOutput = leftPid.update(targetLeftMmS, measuredLeftMmS, dtSec);
+
+        float rightOutput = 0.0f;
+        if (targetRightMmS == 0.0f && measuredRightMmS == 0.0f)
+            rightPid.reset();
+        else
+            rightOutput =
+                rightPid.update(targetRightMmS, measuredRightMmS, dtSec);
 
         lastLeftPwm = applyDeadband(leftOutput, targetLeftMmS);
         lastRightPwm = applyDeadband(rightOutput, targetRightMmS);
