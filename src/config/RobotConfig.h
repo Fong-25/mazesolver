@@ -19,7 +19,7 @@ namespace RobotConfig {
     constexpr float LEFT_WHEEL_DIAMETER_MM =
         33.56f;  // OK TODO: measure independently
     constexpr float RIGHT_WHEEL_DIAMETER_MM =
-        34.22f;  // OK TODO: measure independently
+        34.10f;  // OK TODO: measure independently
 
     constexpr float WHEEL_BASE_MM = 81.72f;  // OK TODO: confirm
     // WHEEL_TRACK_MM is unused currently

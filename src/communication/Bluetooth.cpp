@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "../config/MazeConfig.h"
-#include "../config/RobotConfig.h"
 #include "../config/UserConfig.h"
 #include "../control/MotorControl.h"
 #include "../control/PoseEstimator.h"

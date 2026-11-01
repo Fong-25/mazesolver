@@ -24,7 +24,7 @@ namespace ControlConfig {
     constexpr float RIGHT_KD = 0.0f;
 
     // HEADING
-    constexpr float HEADING_KP = 1.0f;
+    constexpr float HEADING_KP = 2.5f;
     constexpr float HEADING_KI = 0.0f;
     constexpr float HEADING_KD = 0.0f;
 
