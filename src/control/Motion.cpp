@@ -11,9 +11,9 @@
 #include "PID.h"
 
 namespace {
-    // Same formula MotorControl.cpp uses internally for its own measured
-    // speed -- duplicated here (not exposed by MotorControl) because
-    // Motion needs accumulated distance, not instantaneous speed.
+    //  Same formula MotorControl.cpp uses internally for its own measured
+    //  speed -- duplicated here (not exposed by MotorControl) because
+    //  Motion needs accumulated distance, not instantaneous speed.
     const float MM_PER_COUNT_LEFT = (PI * RobotConfig::LEFT_WHEEL_DIAMETER_MM) /
                                     RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
     const float MM_PER_COUNT_RIGHT =
@@ -50,6 +50,7 @@ namespace {
     uint32_t forwardLastUpdateUs = 0;
     float forwardSpeedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S;
     float forwardTargetDistanceMm = RobotConfig::CELL_SIZE_MM;
+    float forwardDistMm = 0.0f;
     // Trapezoidal (or, for a short move, triangular) velocity profile --
     // spec section 31's "aggressive but controlled acceleration /
     // deceleration". This is the commanded speed for THIS tick; it ramps
@@ -91,6 +92,7 @@ namespace {
         forwardLastUpdateUs = micros();
         forwardSpeedMmS = speedMmS;
         forwardTargetDistanceMm = distanceMm;
+        forwardDistMm = 0.0f;
         forwardCurrentSpeedMmS = 0.0f;
         forwardAllowWallCentering = allowWallCentering;
         headingHoldPid.reset();
@@ -162,6 +164,7 @@ namespace {
         float distMm = ((leftDelta * MM_PER_COUNT_LEFT) +
                         (rightDelta * MM_PER_COUNT_RIGHT)) /
                        2.0f;
+        forwardDistMm = distMm;
 
         if (distMm >= forwardTargetDistanceMm) {
             beginSettle();
@@ -274,7 +277,7 @@ namespace Motion {
                 break;
         }
     }
-
+    float forwardTravelMm() { return forwardDistMm; }
     bool isBusy() { return active != Primitive::NONE; }
     Primitive current() { return active; }
 }

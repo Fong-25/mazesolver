@@ -22,6 +22,13 @@ namespace {
         MOVING,
         DONE
     };
+    // Side walls are sampled this far into each cell move, NOT at the cell
+    // center: at the center, a front wall within the diagonal beam's reach
+    // makes the beam hit the front wall and read as a false side wall.
+    constexpr float SIDE_SAMPLE_AT_MM = 70.0f;
+    bool sideSampled = false;
+    bool sampleLeft = false;
+    bool sampleRight = false;
     enum class Leg : uint8_t { TO_GOAL, TO_START };
 
     Phase phase = Phase::IDLE;
@@ -164,8 +171,11 @@ namespace {
         // 1-2. Sense, convert robot-relative readings to world-frame
         // walls using the current heading.
         bool front = senseFront();
-        bool left = senseLeft();
-        bool right = senseRight();
+        // bool left = senseLeft();
+        // bool right = senseRight();
+        bool left = sideSampled ? sampleLeft : true;
+        bool right = sideSampled ? sampleRight : true;
+        sideSampled = false;
 
         Maze::setWall(cellX, cellY, heading, front);
         Maze::setWall(cellX, cellY, turnLeftOf(heading), left);
@@ -254,7 +264,14 @@ namespace Explorer {
                 break;
 
             case Phase::MOVING:
-                if (!Motion::isBusy()) {
+                if (Motion::isBusy()) {
+                    if (!sideSampled &&
+                        Motion::forwardTravelMm() >= SIDE_SAMPLE_AT_MM) {
+                        sampleLeft = senseLeft();
+                        sampleRight = senseRight();
+                        sideSampled = true;
+                    }
+                } else {
                     uint8_t nx, ny;
                     if (Maze::neighborOf(cellX, cellY, heading, nx, ny)) {
                         cellX = nx;

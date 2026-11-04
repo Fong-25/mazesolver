@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 namespace MazeConfig {
-    constexpr uint8_t WIDTH = 16;
-    constexpr uint8_t HEIGHT = 16;
+    constexpr uint8_t WIDTH = 4;
+    constexpr uint8_t HEIGHT = 4;
 
     // Classic micromouse convention: start bottom-left corner, goal is the
     // 2x2 block at the maze center. Both configurable for non-standard

@@ -67,5 +67,5 @@ namespace SensorConfig {
 
     // Wall thresholds — MUST be calibrated on the real robot
     constexpr uint16_t FRONT_WALL_MM = 90;
-    constexpr uint16_t SIDE_WALL_MAX_MM = 120;
+    constexpr uint16_t SIDE_WALL_MAX_MM = 100;
 }

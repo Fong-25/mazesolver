@@ -76,6 +76,8 @@ namespace Motion {
     // Call at the control period, same cadence as MotorControl::update().
     void update(uint32_t nowUs);
 
+    float forwardTravelMm();
+
     bool isBusy();
     Primitive current();
 }
