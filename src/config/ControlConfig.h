@@ -15,7 +15,7 @@ namespace ControlConfig {
     constexpr int16_t MOTOR_DEADBAND_PWM = 40;
 
     // WHEEL VELOCITY
-    constexpr float LEFT_KP = 2.2f;
+    constexpr float LEFT_KP = 2.4f;
     constexpr float LEFT_KI = 1.5f;
     constexpr float LEFT_KD = 0.0f;
 
@@ -44,7 +44,7 @@ namespace ControlConfig {
     // walls on both sides -- leave off until WALL_KP/KI/KD are tuned
     // (SETUP_NOTES.md section C); MotionTest can never pick it up
     // regardless, since it never passes allowWallCentering=true.
-    constexpr bool ENABLE_IMU_HEADING_HOLD = true;
+    constexpr bool ENABLE_IMU_HEADING_HOLD = false;
     constexpr bool ENABLE_TOF_WALL_CENTERING = false;
 
     // Preprocessor mirror of the flag above, kept in this one spot.
