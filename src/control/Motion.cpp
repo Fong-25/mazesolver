@@ -244,12 +244,6 @@ namespace {
 namespace Motion {
     void begin() { active = Primitive::NONE; }
 
-    void setWallGains(float kp, float ki, float kd) {
-#if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
-        wallCenteringPid.setGains(kp, ki, kd);
-#endif
-    }
-
     void moveForwardCell(float speedMmS, float distanceMm,
                          bool allowWallCentering) {
         if (active != Primitive::NONE) return;

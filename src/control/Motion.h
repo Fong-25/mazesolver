@@ -32,8 +32,6 @@ namespace Motion {
 
     void begin();
 
-    void setWallGains(float kp, float ki, float kd);
-
     // Arms a primitive. No-op if one is already running -- caller must
     // wait for isBusy() to clear first, same one-at-a-time contract as
     // the rest of this codebase's state-machine modules.
