@@ -29,13 +29,6 @@ namespace {
     constexpr uint8_t LOG_TOF = 1 << 4;
     constexpr uint8_t LOG_POSE = 1 << 5;
 
-    constexpr uint8_t LOG_SPEED = 1 << 6;
-    const float MM_PER_COUNT_L = PI * RobotConfig::LEFT_WHEEL_DIAMETER_MM /
-                                 RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
-    const float MM_PER_COUNT_R = PI * RobotConfig::RIGHT_WHEEL_DIAMETER_MM /
-                                 RobotConfig::ENCODER_COUNTS_PER_OUTPUT_REV;
-    int32_t spdLastL = 0, spdLastR = 0;
-
     uint8_t logMask = 0;
     uint32_t lastLogMs = 0;
 
@@ -357,9 +350,6 @@ namespace {
             case 'P':
                 bit = LOG_POSE;
                 break;
-            case 'S':
-                bit = LOG_SPEED;
-                break;
             default:
                 Serial.println(F("ERR unknown LOG channel"));
                 return;
@@ -462,7 +452,6 @@ namespace {
         // lastLogMs = nowMs;
 
         if ((nowMs - lastLogMs) < UserConfig::LOG_STREAM_INTERVAL_MS) return;
-        uint32_t dtMs = nowMs - lastLogMs;
         lastLogMs = nowMs;
 
         if (logMask & LOG_ENCODER) {
@@ -495,17 +484,6 @@ namespace {
             Serial.print(PoseEstimator::getYMm());
             Serial.print(F(" th="));
             Serial.println(PoseEstimator::getThetaDeg());
-        }
-        if (logMask & LOG_SPEED) {
-            int32_t l = Encoder::LEFT_ENCODER_COUNT();
-            int32_t r = Encoder::RIGHT_ENCODER_COUNT();
-            float k = 1000.0f / (float)dtMs;
-            Serial.print(F("S L="));
-            Serial.print((int)((l - spdLastL) * MM_PER_COUNT_L * k));
-            Serial.print(F(" R="));
-            Serial.println((int)((r - spdLastR) * MM_PER_COUNT_R * k));
-            spdLastL = l;
-            spdLastR = r;
         }
     }
 }
