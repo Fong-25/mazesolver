@@ -173,7 +173,13 @@ namespace ModeManager {
                 // deliberately NOT the 3s LONG_PRESS STANDBY uses, so
                 // acking a finished run can't double as re-arming one.
                 // Easy to swap later.
-                if (btnEvent == Button::Event::PRESS) enterLocked();
+                // Competition flow (no HC-06, no power cycle): the DIP
+                // switch must work straight from a finished run.
+                if (dipEvent == DipSwitch::Event::ENTERED_SETTING) {
+                    enterSetting();
+                } else if (btnEvent == Button::Event::PRESS) {
+                    enterLocked();
+                }
                 break;
 
             case SystemState::ERROR:

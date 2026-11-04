@@ -57,6 +57,7 @@ namespace MazePersistence {
         EEPROM.update(ADDR_HEIGHT, MazeConfig::HEIGHT);
         if (!Safety::isTripped()) Safety::kickWatchdog();
         for (uint8_t y = 0; y < MazeConfig::HEIGHT; y++) {
+            if (!Safety::isTripped()) Safety::kickWatchdog();
             for (uint8_t x = 0; x < MazeConfig::WIDTH; x++) {
                 EEPROM.update(ADDR_CELLS + (uint16_t)y * MazeConfig::WIDTH + x,
                               Maze::getRawCell(x, y));

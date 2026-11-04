@@ -44,7 +44,7 @@ namespace ControlConfig {
     // walls on both sides -- leave off until WALL_KP/KI/KD are tuned
     // (SETUP_NOTES.md section C); MotionTest can never pick it up
     // regardless, since it never passes allowWallCentering=true.
-    constexpr bool ENABLE_IMU_HEADING_HOLD = false;
+    constexpr bool ENABLE_IMU_HEADING_HOLD = true;
     constexpr bool ENABLE_TOF_WALL_CENTERING = false;
 
     // Preprocessor mirror of the flag above, kept in this one spot.

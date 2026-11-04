@@ -227,6 +227,7 @@ namespace {
 
 namespace Explorer {
     void begin() {
+        Maze::reset();  // always a fresh search: never trust a stale map
         MotorControl::enable();
         cellX = MazeConfig::START_X;
         cellY = MazeConfig::START_Y;
@@ -243,6 +244,10 @@ namespace Explorer {
         switch (phase) {
             case Phase::IDLE:
             case Phase::DONE:
+                MazePersistence::save();  // pick up return-leg discoveries too
+                Motion::stop();
+                MotorControl::disable();
+                phase = Phase::DONE;
                 return;
 
             case Phase::DECIDE:
