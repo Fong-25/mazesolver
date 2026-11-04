@@ -48,7 +48,7 @@ namespace {
                 // Same primitive for all three -- see header TODO.
                 Motion::moveForwardCell(
                     ControlConfig::FORWARD_BASE_SPEED_MM_S,
-                    ControlConfig::MOTION_TEST_FORWARD_DISTANCE_MM);
+                    ControlConfig::MOTION_TEST_FORWARD_DISTANCE_MM, true);
                 break;
             case TestKind::TURNL:
                 Motion::turnLeft90();

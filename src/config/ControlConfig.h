@@ -29,7 +29,7 @@ namespace ControlConfig {
     constexpr float HEADING_KD = 0.0f;
 
     // WALL CENTERING
-    constexpr float WALL_KP = 1.0f;
+    constexpr float WALL_KP = 2.0f;
     constexpr float WALL_KI = 0.0f;
     constexpr float WALL_KD = 0.0f;
 
@@ -45,7 +45,7 @@ namespace ControlConfig {
     // (SETUP_NOTES.md section C); MotionTest can never pick it up
     // regardless, since it never passes allowWallCentering=true.
     constexpr bool ENABLE_IMU_HEADING_HOLD = true;
-    constexpr bool ENABLE_TOF_WALL_CENTERING = false;
+    constexpr bool ENABLE_TOF_WALL_CENTERING = true;
 
     // Preprocessor mirror of the flag above, kept in this one spot.
     // Needed because a constexpr bool can gate runtime dead code (the
@@ -54,7 +54,7 @@ namespace ControlConfig {
     // gets DECLARED -- that PID object costs 46 bytes of RAM merely by
     // existing. With RAM this tight, a disabled feature shouldn't still
     // pay rent for it. Flip both together when you're ready to tune it.
-#define MAZESOLVER_COMPILE_TOF_WALL_CENTERING 0
+#define MAZESOLVER_COMPILE_TOF_WALL_CENTERING 1
 
     // Clamp on the wall-centering PID's output, same role as
     // HEADING_CORRECTION_LIMIT_MM_S. Kept separate since the two sources
@@ -62,6 +62,9 @@ namespace ControlConfig {
     // shouldn't be able to swamp a working heading-hold term. TODO: tune
     // once ENABLE_TOF_WALL_CENTERING is flipped on.
     constexpr float WALL_CORRECTION_LIMIT_MM_S = 200.0f;
+    // Skip centering while a front wall is closer than this: the diagonal
+    // beams would hit it instead of the side walls.
+    constexpr uint16_t WALL_CENTER_MIN_FRONT_MM = 120;
 
     constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
     constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms

@@ -6,6 +6,7 @@
 #include "../config/MazeConfig.h"
 #include "../config/RobotConfig.h"
 #include "../config/UserConfig.h"
+#include "../control/Motion.h"
 #include "../control/MotorControl.h"
 #include "../control/PoseEstimator.h"
 #include "../drivers/BatteryMonitor.h"
@@ -307,8 +308,11 @@ namespace {
         } else if (strcasecmp(side, "R") == 0) {
             MotorControl::setRightGains(kp, ki, kd);
             Serial.println(F("PID R updated"));
+        } else if (strcasecmp(side, "W") == 0) {
+            Motion::setWallGains(kp, ki, kd);
+            Serial.println(F("PID W updated"));
         } else
-            Serial.println(F("ERR PID side must be L or R"));
+            Serial.println(F("ERR PID side must be L, R or W"));
     }
 
     void handleLogCommand(char* rest) {

@@ -4,6 +4,7 @@
 
 #include "../config/ControlConfig.h"
 #include "../config/RobotConfig.h"
+#include "../config/SensorConfig.h"
 #include "../drivers/Encoder.h"
 #include "../drivers/IMU.h"
 #include "../drivers/ToFManager.h"
@@ -131,14 +132,22 @@ namespace {
                     (float)ToFManager::getDistanceMm(SensorRole::DIAGONAL_LEFT);
                 float rightMm = (float)ToFManager::getDistanceMm(
                     SensorRole::DIAGONAL_RIGHT);
-                // target/measurement set up so PID's (target-measurement)
-                // comes out to (leftMm - rightMm) -- positive when closer
-                // to the right wall than the left, matching
-                // headingHoldPid's sign convention (positive correction =
-                // right wheel faster). Sign TBD, verify physically same
-                // as every other signed convention in this codebase.
-                correction +=
-                    wallCenteringPid.update(0.0f, rightMm - leftMm, dtSec);
+                // An open side reads FAR but still "valid", so require both
+                // walls to actually be there...
+                bool bothWalls = leftMm < SensorConfig::SIDE_WALL_MAX_MM &&
+                                 rightMm < SensorConfig::SIDE_WALL_MAX_MM;
+                // ...and no front wall near enough to be hit by a beam.
+                bool frontClear =
+                    (!ToFManager::isValid(SensorRole::FRONT_LEFT) ||
+                     ToFManager::getDistanceMm(SensorRole::FRONT_LEFT) >=
+                         ControlConfig::WALL_CENTER_MIN_FRONT_MM) &&
+                    (!ToFManager::isValid(SensorRole::FRONT_RIGHT) ||
+                     ToFManager::getDistanceMm(SensorRole::FRONT_RIGHT) >=
+                         ControlConfig::WALL_CENTER_MIN_FRONT_MM);
+                if (bothWalls && frontClear) {
+                    correction +=
+                        wallCenteringPid.update(0.0f, rightMm - leftMm, dtSec);
+                }
             }
 #endif
         }
@@ -234,6 +243,12 @@ namespace {
 
 namespace Motion {
     void begin() { active = Primitive::NONE; }
+
+    void setWallGains(float kp, float ki, float kd) {
+#if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
+        wallCenteringPid.setGains(kp, ki, kd);
+#endif
+    }
 
     void moveForwardCell(float speedMmS, float distanceMm,
                          bool allowWallCentering) {
