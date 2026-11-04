@@ -17,9 +17,9 @@ namespace RobotConfig {
 
     // MECHANICAL GEOMETRY
     constexpr float LEFT_WHEEL_DIAMETER_MM =
-        33.56f;  // OK TODO: measure independently
+        32.80f;  // OK TODO: measure independently
     constexpr float RIGHT_WHEEL_DIAMETER_MM =
-        34.10f;  // OK TODO: measure independently
+        33.38f;  // OK TODO: measure independently
 
     constexpr float WHEEL_BASE_MM = 81.72f;  // OK TODO: confirm
     // WHEEL_TRACK_MM is unused currently
@@ -51,7 +51,7 @@ namespace RobotConfig {
     // 0.0f placeholder assumes the axle is AT the rear wall, which is
     // almost certainly wrong -- this MUST be corrected before trusting
     // alignment on a real run.
-    constexpr float ROBOT_CENTER_TO_REAR_MM = 0.0f;
+    constexpr float ROBOT_CENTER_TO_REAR_MM = 24.9f;
     constexpr float FIRST_MOVE_DISTANCE_MM =
         (CELL_SIZE_MM / 2.0f) - ROBOT_CENTER_TO_REAR_MM;
     // A negative distance would mean the axle already sits past the cell

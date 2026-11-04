@@ -88,7 +88,7 @@ namespace ControlConfig {
     constexpr float HEADING_CORRECTION_LIMIT_MM_S = 200.0f;
 
     constexpr float TURN_SPEED_DEG_S = 180.0f;
-    constexpr float TURN_ANGLE_TOLERANCE_DEG = 2.0f;
+    constexpr float TURN_ANGLE_TOLERANCE_DEG = 2.1f;
 
     // Forward test distance for MOTION_TEST's ACCEL/CRUISE/DECEL --
     // deliberately longer than one CELL_SIZE_MM (180mm), since the whole
