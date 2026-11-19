@@ -71,6 +71,13 @@ void setup() {
 
     Wire.begin();  // step 5 -- shared bus, must happen exactly once, before
                    // either I2C device below
+    // Without this a stuck bus (a slave holding SDA low after a glitch --
+    // motor noise, a loose connector) hangs Wire's busy-waits forever and
+    // the 500 ms watchdog resets the robot mid-run. 5 ms is far above the
+    // slowest real transaction here (<1.5 ms at 100 kHz); on timeout the
+    // TWI hardware is reset so the bus can recover. A timed-out read
+    // degrades to an invalid ToF sample / a ~0 deg/s gyro sample.
+    Wire.setWireTimeout(5000, true);
     bool tofOk = ToFManager::begin();  // step 6 (also sets the I2C clock)
     bool imuOk = IMU::begin();         // step 7
     if (imuOk) {

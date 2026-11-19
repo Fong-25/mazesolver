@@ -29,9 +29,9 @@ namespace ControlConfig {
     constexpr float HEADING_KD = 0.0f;
 
     // WALL CENTERING
-    constexpr float WALL_KP = 2.5f;
-    constexpr float WALL_KI = 0.0f;
-    constexpr float WALL_KD = 1.0f;
+    constexpr float WALL_KP = 3.5f;
+    constexpr float WALL_KI = 0.8f;
+    constexpr float WALL_KD = 3.0f;
 
     // Which correction sources feed moveForwardCell()'s differential
     // correction (spec section 36 diagram: heading error / wall error ->

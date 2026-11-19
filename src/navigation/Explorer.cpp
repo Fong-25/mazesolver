@@ -207,6 +207,7 @@ namespace {
             cellY == MazeConfig::START_Y) {
             Motion::stop();
             MotorControl::disable();
+            MazePersistence::save();  // pick up return-leg discoveries too
             phase = Phase::DONE;
             return;
         }

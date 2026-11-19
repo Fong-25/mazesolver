@@ -40,7 +40,17 @@ namespace {
     uint16_t lastDistanceMm[MAX_SENSORS] = {0, 0, 0, 0};
     bool lastValid[MAX_SENSORS] = {false, false, false, false};
     uint8_t sampleCount[MAX_SENSORS] = {0, 0, 0, 0};
+    uint8_t consecutiveTimeouts[MAX_SENSORS] = {0, 0, 0, 0};
     uint16_t sampleMs[MAX_SENSORS] = {0, 0, 0, 0};  // low 16 bits of millis()
+
+    // Runtime read timeout. A blocking read in update() stalls the WHOLE
+    // loop for up to this long, and the watchdog is 500 ms (Safety.cpp):
+    // the 500 ms used during init would turn one dead sensor into a
+    // watchdog reset mid-run. Continuous mode delivers a result about every
+    // 33 ms and each sensor is polled every 4 * TOF_POLL_INTERVAL_MS, so
+    // data is normally already waiting and this never costs anything.
+    constexpr uint16_t RUNTIME_TIMEOUT_MS = 30;
+    constexpr uint8_t RUNTIME_TIMEOUT_LIMIT = 3;  // consecutive -> invalid
 
     uint8_t pollCursor = 0;
     uint32_t lastPollMs = 0;
@@ -67,9 +77,17 @@ namespace {
 
         if (sensors[i].timeoutOccurred()) {
             // One bad I2C cycle -> keep last known good value rather than
-            // feeding a garbage reading into navigation.
+            // feeding a garbage reading into navigation. But a sensor that
+            // keeps timing out is dead, and its frozen last value would
+            // otherwise be trusted forever -- after a few in a row, report
+            // it invalid.
+            if (consecutiveTimeouts[i] < 255) consecutiveTimeouts[i]++;
+            if (consecutiveTimeouts[i] >= RUNTIME_TIMEOUT_LIMIT) {
+                lastValid[i] = false;
+            }
             return;
         }
+        consecutiveTimeouts[i] = 0;
 
         // Per-sensor hardware bias correction (SensorConfig::TOF_OFFSET_MM_*)
         // -- applied once, here, so every consumer above this driver
@@ -86,8 +104,14 @@ namespace {
         }
 
         lastDistanceMm[i] = (uint16_t)corrected;
-        lastValid[i] = (lastDistanceMm[i] >= SensorConfig::TOF_MIN_VALID_MM &&
-                        lastDistanceMm[i] <= SensorConfig::TOF_MAX_VALID_MM);
+        // Validity is judged on the RAW reading, before the per-sensor
+        // offset: the offset can legitimately pull a good close-range
+        // reading below TOF_MIN_VALID_MM (raw 38 mm with a -20 mm offset is
+        // a perfectly good 18 mm), and a front sensor at the cell center
+        // with a wall ahead reads exactly that low.
+        lastValid[i] = (rawMm >= SensorConfig::TOF_MIN_VALID_MM &&
+                        rawMm <= SensorConfig::TOF_MAX_VALID_MM);
+
         sampleCount[i]++;
         sampleMs[i] = (uint16_t)lastPollMs;  // set by update() just before
     }
@@ -130,6 +154,7 @@ namespace ToFManager {
             sensors[i].setAddress(
                 TARGET_ADDR[i]);  // Step 6/9: claim unique address
             sensors[i].startContinuous();
+            sensors[i].setTimeout(RUNTIME_TIMEOUT_MS);  // 500
             sensorOk[i] = true;
         }
 

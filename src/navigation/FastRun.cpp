@@ -202,7 +202,7 @@ namespace FastRun {
         // Same start-orientation assumption as Explorer -- keep the two
         // in sync if that ever changes.
         heading = Maze::Direction::NORTH;
-        FloodFill::computeToGoal();
+        FloodFill::computeToGoalKnownOnly();
         runCells = 1;
         alignPending = RobotConfig::FIRST_MOVE_DISTANCE_MM > 0.0f;
         phase = Phase::DECIDE;

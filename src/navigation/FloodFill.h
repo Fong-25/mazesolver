@@ -14,6 +14,16 @@
 namespace FloodFill {
     constexpr uint8_t UNREACHABLE = 255;
 
+    // Like computeToGoal(), but only expands through cells the robot has
+    // actually VISITED (Maze::isVisited()). EXPLORE treats unknown walls as
+    // open, which is right for finding things out; FAST_RUN must not,
+    // because a "shorter" route through a never-visited cell is a guess
+    // about walls nobody sensed, and FAST_RUN drives it at speed. Cells
+    // with no known-only route get UNREACHABLE, so FastRun's existing "no
+    // known path" fault fires instead of a crash. Cost: the route can be
+    // longer than the true shortest one if a better path was never driven.
+    void computeToGoalKnownOnly();
+
     // Recomputes distance for every cell reachable (through currently
     // known walls) from the goal region (MazeConfig::GOAL_*). Full
     // recompute, not incremental -- fine at 16x16 (worst case a few
