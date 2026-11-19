@@ -24,4 +24,13 @@ namespace ToFManager {
 
     // True only if the sensor is installed AND its last reading was in-range.
     bool isValid(SensorRole role);
+
+    // Increments (wrapping) every time a role's reading is refreshed, so a
+    // consumer can act on each reading exactly once. 0 for an uninstalled role.
+    uint8_t getSampleCount(SensorRole role);
+
+    // Milliseconds since the poll that produced the role's current reading
+    // (wrap-safe up to ~65 s). The sensor's own measurement is older still
+    // (see SensorConfig::TOF_MEASUREMENT_LATENCY_MS). 0xFFFF if uninstalled.
+    uint16_t getSampleAgeMs(SensorRole role, uint32_t nowMs);
 }

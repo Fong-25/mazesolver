@@ -79,9 +79,9 @@ placeholder until measured — see `SETUP_NOTES.md` section A. A
 
 Purpose: run the already-known map (from a completed EXPLORE this session, or
 `LOAD`ed from EEPROM at boot) start → goal as one timed, one-way attempt. No
-wall sensing, no `Maze`/`FloodFill` updates during the run, no return leg.
-ModeManager entering FAST_RUN is the implicit contract that a valid map
-exists.
+`Maze`/`FloodFill` updates during the run (sensors only correct the driving,
+never the map), no return leg. ModeManager entering FAST_RUN is the implicit
+contract that a valid map exists.
 
 Behavior (`navigation/FastRun.cpp`), all running at `FAST_RUN_SPEED_MM_S`:
 
@@ -93,6 +93,12 @@ Behavior (`navigation/FastRun.cpp`), all running at `FAST_RUN_SPEED_MM_S`:
   primitive — no stop between cells. It looks ahead with the same rule the
   real decision uses, so the batch is exactly what step-by-step would have
   done. A batch ends at any turn, or at the first goal cell.
+- **Front-wall resync** (`ControlConfig::ENABLE_FRONT_WALL_RESYNC`, off until
+  tuned — see `TUNING_GUIDE.md` 5.4): applies only to a batch whose end cell
+  has a wall across its front in the map. The front ToF readings during the
+  approach then correct the batch's target distance instead of trusting
+  encoders alone. `LOG R` shows it (`ok`/`rej`/`corr`). Open-front runs and
+  turns have nothing to resync against, so they stay encoder/IMU-only.
 - **Turns** still stop, rotate in place (IMU-tracked), then continue. Corner
   smoothing / diagonals are **not** implemented — deliberately deferred
   until this baseline is confirmed working on hardware.
@@ -147,6 +153,7 @@ BT commands while in this mode:
 | `LOG I`   | IMU yaw rate + integrated yaw |
 | `LOG B`   | Battery voltage |
 | `LOG T`   | ToF distances (all installed roles) |
+| `LOG R`   | Front-wall resync: `R ok=<applied> rej=<rejected> corr=<mm>` |
 | `LOG A`   | All of the above, one line per tick |
 | `LOG OFF` | Stop streaming |
 

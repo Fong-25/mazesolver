@@ -29,9 +29,9 @@ namespace ControlConfig {
     constexpr float HEADING_KD = 0.0f;
 
     // WALL CENTERING
-    constexpr float WALL_KP = 2.0f;
+    constexpr float WALL_KP = 2.5f;
     constexpr float WALL_KI = 0.0f;
-    constexpr float WALL_KD = 0.0f;
+    constexpr float WALL_KD = 1.0f;
 
     // Which correction sources feed moveForwardCell()'s differential
     // correction (spec section 36 diagram: heading error / wall error ->
@@ -65,6 +65,28 @@ namespace ControlConfig {
     // Skip centering while a front wall is closer than this: the diagonal
     // beams would hit it instead of the side walls.
     constexpr uint16_t WALL_CENTER_MIN_FRONT_MM = 120;
+
+    // FRONT-WALL RESYNC (FAST_RUN only). When a batched FAST_RUN move ends
+    // in a cell whose front wall is known in the map, the front ToF
+    // readings during the approach correct the move's target distance.
+    // Needs SensorConfig::FRONT_WALL_CENTER_MM measured first; off until
+    // then (TUNING_GUIDE.md phase 5.4).
+    constexpr bool ENABLE_FRONT_WALL_RESYNC = true;
+    // Only readings at or below this are used. It must also cover braking
+    // distance plus the gap between two samples of the same sensor:
+    // roughly FRONT_WALL_CENTER_MM + v^2 / (2 * MAX_LINEAR_ACCEL_MM_S2)
+    // + 4 * TOF_POLL_INTERVAL_MS * v, so raise it with FAST_RUN speed.
+    constexpr uint16_t RESYNC_FRONT_MAX_MM = 300;
+    // A sample that would move the target by more than this is rejected as
+    // a misread / wrong map. Must exceed the real drift over the longest
+    // straight (~1-2% of the run).
+    constexpr float RESYNC_MAX_CORRECTION_MM = 50.0f;
+    // Fraction of the error applied per accepted sample (1.0 = trust the
+    // newest sample completely, lower = average out sensor noise).
+    constexpr float RESYNC_BLEND = 0.5f;
+    // A correction leaving less distance than needed to brake (minus this
+    // slack) is skipped as too late.
+    constexpr float RESYNC_BRAKE_MARGIN_MM = 5.0f;
 
     constexpr uint32_t CONTROL_PERIOD_US = 2000;  // 2ms
     constexpr uint32_t IMU_PERIOD_US = 5000;      // 5ms

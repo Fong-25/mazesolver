@@ -65,6 +65,13 @@ namespace {
     float forwardCurrentSpeedMmS = 0.0f;
     bool forwardAllowWallCentering = false;
 
+    // Front-wall resync (see tryFrontResync()).
+    bool forwardResync = false;
+    uint8_t resyncSeen[2] = {0, 0};  // last ToF sample count acted on
+    uint8_t resyncAppliedCount = 0;
+    uint8_t resyncRejectedCount = 0;
+    float resyncCorrectionTotalMm = 0.0f;
+
     // TURN_* state
     float turnStartYawDeg = 0.0f;
     float turnTargetDeltaDeg = 0.0f;
@@ -85,7 +92,8 @@ namespace {
         return (millis() - settleStartMs) >= ControlConfig::MOTION_SETTLE_MS;
     }
 
-    void armForward(float speedMmS, float distanceMm, bool allowWallCentering) {
+    void armForward(float speedMmS, float distanceMm, bool allowWallCentering,
+                    bool resyncFrontWall) {
         active = Motion::Primitive::FORWARD_CELL;
         startLeftCount = Encoder::LEFT_ENCODER_COUNT();
         startRightCount = Encoder::RIGHT_ENCODER_COUNT();
@@ -96,6 +104,15 @@ namespace {
         forwardDistMm = 0.0f;
         forwardCurrentSpeedMmS = 0.0f;
         forwardAllowWallCentering = allowWallCentering;
+        forwardResync =
+            ControlConfig::ENABLE_FRONT_WALL_RESYNC && resyncFrontWall;
+        resyncSeen[0] =
+            ToFManager::getSampleCount(ToFManager::SensorRole::FRONT_LEFT);
+        resyncSeen[1] =
+            ToFManager::getSampleCount(ToFManager::SensorRole::FRONT_RIGHT);
+        resyncAppliedCount = 0;
+        resyncRejectedCount = 0;
+        resyncCorrectionTotalMm = 0.0f;
         headingHoldPid.reset();
 #if MAZESOLVER_COMPILE_TOF_WALL_CENTERING
         wallCenteringPid.reset();
@@ -155,6 +172,57 @@ namespace {
         return correction;
     }
 
+    // Front-wall resync: pulls forwardTargetDistanceMm toward where the front
+    // sensors say the stop point (robot center over the end cell's center)
+    // actually is. Runs once per FRESH sample of each front sensor,
+    // independently -- the two are polled at different instants, so
+    // averaging them would mix two different robot positions.
+    //   sampleDist = distNow - speed * (poll age + measurement latency)
+    //   stopDist   = sampleDist + (reading - FRONT_WALL_CENTER_MM)
+    // and the target moves BLEND of the way toward stopDist. A sample is
+    // skipped if out of range, rejected if it moves the target by more than
+    // RESYNC_MAX_CORRECTION_MM (misread / wrong map -- follow the encoders)
+    // or arrives too late to brake for the new target.
+    void tryFrontResync(float distMm) {
+        using ToFManager::SensorRole;
+        static const SensorRole FRONT[2] = {SensorRole::FRONT_LEFT,
+                                            SensorRole::FRONT_RIGHT};
+        for (uint8_t i = 0; i < 2; i++) {
+            uint8_t count = ToFManager::getSampleCount(FRONT[i]);
+            if (count == resyncSeen[i]) continue;  // nothing new
+            resyncSeen[i] = count;
+
+            if (!ToFManager::isValid(FRONT[i])) continue;
+            float frontMm = (float)ToFManager::getDistanceMm(FRONT[i]);
+            if (frontMm > (float)ControlConfig::RESYNC_FRONT_MAX_MM) continue;
+
+            // mm/s * ms -> mm needs a 1/1000, folded into one multiply.
+            float ageMs = (float)ToFManager::getSampleAgeMs(FRONT[i], millis()) +
+                          (float)SensorConfig::TOF_MEASUREMENT_LATENCY_MS;
+            float sampleDistMm = distMm - forwardCurrentSpeedMmS * ageMs * 0.001f;
+            float stopDistMm =
+                sampleDistMm +
+                (frontMm - (float)SensorConfig::FRONT_WALL_CENTER_MM);
+
+            float errorMm = stopDistMm - forwardTargetDistanceMm;
+            float remainingMm = stopDistMm - distMm;
+            float brakeMm = forwardCurrentSpeedMmS * forwardCurrentSpeedMmS *
+                            (0.5f / RobotConfig::MAX_LINEAR_ACCEL_MM_S2);
+
+            if (fabsf(errorMm) > ControlConfig::RESYNC_MAX_CORRECTION_MM ||
+                remainingMm <= 0.0f ||
+                remainingMm < brakeMm - ControlConfig::RESYNC_BRAKE_MARGIN_MM) {
+                resyncRejectedCount++;
+                continue;
+            }
+
+            float stepMm = ControlConfig::RESYNC_BLEND * errorMm;
+            forwardTargetDistanceMm += stepMm;
+            resyncCorrectionTotalMm += stepMm;
+            resyncAppliedCount++;
+        }
+    }
+
     void armTurn(Motion::Primitive p, float targetDeltaDeg) {
         active = p;
         turnStartYawDeg = IMU::getYawDeg();
@@ -174,6 +242,9 @@ namespace {
                         (rightDelta * MM_PER_COUNT_RIGHT)) /
                        2.0f;
         forwardDistMm = distMm;
+
+        if (ControlConfig::ENABLE_FRONT_WALL_RESYNC && forwardResync)
+            tryFrontResync(distMm);
 
         if (distMm >= forwardTargetDistanceMm) {
             beginSettle();
@@ -245,9 +316,9 @@ namespace Motion {
     void begin() { active = Primitive::NONE; }
 
     void moveForwardCell(float speedMmS, float distanceMm,
-                         bool allowWallCentering) {
+                         bool allowWallCentering, bool resyncFrontWall) {
         if (active != Primitive::NONE) return;
-        armForward(speedMmS, distanceMm, allowWallCentering);
+        armForward(speedMmS, distanceMm, allowWallCentering, resyncFrontWall);
     }
 
     void turnLeft90() {
@@ -287,6 +358,9 @@ namespace Motion {
         }
     }
     float forwardTravelMm() { return forwardDistMm; }
+    uint8_t resyncApplied() { return resyncAppliedCount; }
+    uint8_t resyncRejected() { return resyncRejectedCount; }
+    float resyncCorrectionMm() { return resyncCorrectionTotalMm; }
     bool isBusy() { return active != Primitive::NONE; }
     Primitive current() { return active; }
 }

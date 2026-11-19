@@ -60,10 +60,16 @@ namespace Motion {
     // corridor, which is Explorer/FastRun's normal per-cell driving, not
     // a start-alignment move (that IS the centering) and never
     // MotionTest's open-bench primitives (no ToF involved by design).
+    //
+    // resyncFrontWall opts THIS move into front-wall resync (ControlConfig::
+    // ENABLE_FRONT_WALL_RESYNC must also be on). The caller promises the
+    // move ends in a cell with a wall across its front, so the first wall
+    // the front sensors see ahead IS that wall. Only FastRun passes true.
+    // Defaults false.
     void moveForwardCell(
         float speedMmS = ControlConfig::FORWARD_BASE_SPEED_MM_S,
         float distanceMm = RobotConfig::CELL_SIZE_MM,
-        bool allowWallCentering = false);
+        bool allowWallCentering = false, bool resyncFrontWall = false);
     void turnLeft90();
     void turnRight90();
     void turn180();
@@ -77,6 +83,12 @@ namespace Motion {
     void update(uint32_t nowUs);
 
     float forwardTravelMm();
+
+    // Front-wall resync bookkeeping for the current/most recent forward
+    // move, reset when the next one starts -- read by Bluetooth's `LOG R`.
+    uint8_t resyncApplied();   // samples that moved the target
+    uint8_t resyncRejected();  // in-range samples that failed a sanity check
+    float resyncCorrectionMm();  // total mm the target was moved by
 
     bool isBusy();
     Primitive current();

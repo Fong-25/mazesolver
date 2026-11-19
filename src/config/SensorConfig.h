@@ -68,4 +68,23 @@ namespace SensorConfig {
     // Wall thresholds — MUST be calibrated on the real robot
     constexpr uint16_t FRONT_WALL_MM = 90;
     constexpr uint16_t SIDE_WALL_MAX_MM = 100;
+
+    // FRONT-WALL RESYNC (FAST_RUN only, see ControlConfig::
+    // ENABLE_FRONT_WALL_RESYNC). What a front sensor reads with the robot's
+    // axle centerline exactly over a cell center and a real wall across the
+    // front of that cell -- the wall-present reading itself, not the
+    // threshold above it. The resync stops the robot where the front
+    // sensors read this value, so a wrong number shifts EVERY resynced stop
+    // by the same amount.
+    //
+    // TODO: measure (TUNING_GUIDE.md phase 5.4). 75 is a placeholder only.
+    constexpr uint16_t FRONT_WALL_CENTER_MM = 18;
+    static_assert(FRONT_WALL_CENTER_MM < FRONT_WALL_MM,
+                  "FRONT_WALL_CENTER_MM is the wall-present reading at cell "
+                  "center; FRONT_WALL_MM is the detection threshold above it");
+
+    // Age of a ToF measurement at the moment ToFManager polls it: the sensor
+    // finished it up to one timing budget (~33 ms) earlier, so on average
+    // about half of that.
+    constexpr uint16_t TOF_MEASUREMENT_LATENCY_MS = 20;
 }

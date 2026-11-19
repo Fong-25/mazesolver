@@ -39,6 +39,8 @@ namespace {
     bool sensorOk[MAX_SENSORS] = {false, false, false, false};
     uint16_t lastDistanceMm[MAX_SENSORS] = {0, 0, 0, 0};
     bool lastValid[MAX_SENSORS] = {false, false, false, false};
+    uint8_t sampleCount[MAX_SENSORS] = {0, 0, 0, 0};
+    uint16_t sampleMs[MAX_SENSORS] = {0, 0, 0, 0};  // low 16 bits of millis()
 
     uint8_t pollCursor = 0;
     uint32_t lastPollMs = 0;
@@ -86,6 +88,8 @@ namespace {
         lastDistanceMm[i] = (uint16_t)corrected;
         lastValid[i] = (lastDistanceMm[i] >= SensorConfig::TOF_MIN_VALID_MM &&
                         lastDistanceMm[i] <= SensorConfig::TOF_MAX_VALID_MM);
+        sampleCount[i]++;
+        sampleMs[i] = (uint16_t)lastPollMs;  // set by update() just before
     }
 }
 
@@ -157,5 +161,17 @@ namespace ToFManager {
         uint8_t idx = roleToIndex(role);
         if (idx >= MAX_SENSORS || !sensorOk[idx]) return false;
         return lastValid[idx];
+    }
+
+    uint8_t getSampleCount(SensorRole role) {
+        uint8_t idx = roleToIndex(role);
+        if (idx >= MAX_SENSORS || !sensorOk[idx]) return 0;
+        return sampleCount[idx];
+    }
+
+    uint16_t getSampleAgeMs(SensorRole role, uint32_t nowMs) {
+        uint8_t idx = roleToIndex(role);
+        if (idx >= MAX_SENSORS || !sensorOk[idx]) return 0xFFFF;
+        return (uint16_t)((uint16_t)nowMs - sampleMs[idx]);
     }
 }

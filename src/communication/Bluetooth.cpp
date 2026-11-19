@@ -6,6 +6,7 @@
 #include "../config/MazeConfig.h"
 #include "../config/RobotConfig.h"
 #include "../config/UserConfig.h"
+#include "../control/Motion.h"
 #include "../control/MotorControl.h"
 #include "../control/PoseEstimator.h"
 #include "../drivers/BatteryMonitor.h"
@@ -28,6 +29,7 @@ namespace {
     constexpr uint8_t LOG_BATTERY = 1 << 3;
     constexpr uint8_t LOG_TOF = 1 << 4;
     constexpr uint8_t LOG_POSE = 1 << 5;
+    constexpr uint8_t LOG_RESYNC = 1 << 6;
 
     uint8_t logMask = 0;
     uint32_t lastLogMs = 0;
@@ -315,7 +317,7 @@ namespace {
         char* savePtr = nullptr;
         char* channel = strtok_r(rest, " ", &savePtr);
         if (channel == nullptr) {
-            Serial.println(F("ERR LOG needs a channel (E/M/I/B/T/P/A/OFF)"));
+            Serial.println(F("ERR LOG needs a channel (E/M/I/B/T/P/R/A/OFF)"));
             return;
         }
 
@@ -325,7 +327,7 @@ namespace {
             return;
         }
         if (strcasecmp(channel, "A") == 0) {
-            logMask = 0x3F;
+            logMask = 0x7F;
             Serial.println(F("LOG ALL"));
             return;
         }
@@ -349,6 +351,9 @@ namespace {
                 break;
             case 'P':
                 bit = LOG_POSE;
+                break;
+            case 'R':
+                bit = LOG_RESYNC;
                 break;
             default:
                 Serial.println(F("ERR unknown LOG channel"));
@@ -484,6 +489,14 @@ namespace {
             Serial.print(PoseEstimator::getYMm());
             Serial.print(F(" th="));
             Serial.println(PoseEstimator::getThetaDeg());
+        }
+        if (logMask & LOG_RESYNC) {
+            Serial.print(F("R ok="));
+            Serial.print(Motion::resyncApplied());
+            Serial.print(F(" rej="));
+            Serial.print(Motion::resyncRejected());
+            Serial.print(F(" corr="));
+            Serial.println(Motion::resyncCorrectionMm());
         }
     }
 }

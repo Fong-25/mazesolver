@@ -121,10 +121,24 @@ namespace {
             distanceMm += RobotConfig::FIRST_MOVE_DISTANCE_MM;
             alignPending = false;
         }
+        // The run's end cell. If the map says it has a wall across its
+        // front, the front sensors can confirm where to stop (Motion's
+        // front-wall resync). Without one, the move stays encoder/IMU-only.
+        bool resync = false;
+        if (ControlConfig::ENABLE_FRONT_WALL_RESYNC) {
+            uint8_t endX = cellX, endY = cellY;
+            for (uint8_t i = 0; i < runCells; i++) {
+                uint8_t nx, ny;
+                if (!Maze::neighborOf(endX, endY, heading, nx, ny)) break;
+                endX = nx;
+                endY = ny;
+            }
+            resync = Maze::hasWall(endX, endY, heading);
+        }
         // Normal batched driving inside the known map -- allowed to trust
         // wall data, same as Explorer's per-cell moves.
         Motion::moveForwardCell(ControlConfig::FAST_RUN_SPEED_MM_S, distanceMm,
-                                true);
+                                true, resync);
     }
 
     void enterTurnOrMove(Maze::Direction targetDir) {

@@ -160,6 +160,31 @@ wall, one open side)
   `FAST_RUN_SPEED_MM_S` in steps (500 -> 600 ...), re-checking heading hold
   each step and raising `MAX_LINEAR_ACCEL_MM_S2` if the ramps dominate. No
   advanced fast run until this is solid.
+- **5.4 Front-wall resync** (`FRONT_WALL_CENTER_MM`,
+  `ENABLE_FRONT_WALL_RESYNC`, `RESYNC_*`, `TOF_MEASUREMENT_LATENCY_MS`).
+  Lets a batched FAST_RUN move that ends at a map front wall stop on what
+  the front ToF sees instead of encoders alone. Leave it off until the
+  measurement below is done.
+  1. Park the robot with its axle centerline exactly over a cell center in
+     a cell with a real wall across the front (reuse the 5.1 marks) and run
+     `LOG T`. Take the **larger** of `FL`/`FR` and set
+     `FRONT_WALL_CENTER_MM` to it — this is the wall-present reading at
+     center, not a threshold. A wrong value shifts every resynced stop by
+     the same amount.
+  2. The `static_assert` in `SensorConfig.h` requires it below
+     `FRONT_WALL_MM`. If that fails, the wall-present reading is wrong, not
+     the constant.
+  3. Set `ENABLE_FRONT_WALL_RESYNC = true` and rebuild. On a FAST_RUN,
+     `LOG R` streams `ok` (applied samples), `rej` (rejected ones) and the
+     total `corr` mm the target moved, for the current/most recent move.
+     `rej` mostly means a sample arrived too late to brake for the new
+     target, or it would have moved the target by more than
+     `RESYNC_MAX_CORRECTION_MM` (misread or wrong map).
+  4. Tune `RESYNC_BLEND` first (lower averages out noise, higher follows
+     the wall sooner). Raise `RESYNC_FRONT_MAX_MM` if runs at a higher
+     `FAST_RUN_SPEED_MM_S` lose samples before the wall enters range, and
+     `TOF_MEASUREMENT_LATENCY_MS` if stops consistently come out late at
+     speed (the sample is older than assumed).
 
 ## Phase 6 - Wall centering (last, only after 3-5 are solid)
 1. Flip **both**: `ENABLE_TOF_WALL_CENTERING = true` and
@@ -197,6 +222,7 @@ wall, one open side)
 | `MOTOR_DEADBAND_PWM`, wheel PID + limits, `HEADING_*`, `TURN_*`, `MOTION_SETTLE_MS`, `MOTION_TEST_FORWARD_DISTANCE_MM`, `MAX_LINEAR_*`, `*_SPEED_MM_S` | 3 |
 | `TOF_OFFSET_MM_*`, `TOF_DIAGONAL_MOUNT_ANGLE_DEG`, `TOF_MIN/MAX_VALID_MM`, `FRONT_WALL_MM`, `SIDE_WALL_MAX_MM` | 4 |
 | `ROBOT_CENTER_TO_REAR_MM`, `FAST_RUN_SPEED_MM_S` | 5 |
+| `FRONT_WALL_CENTER_MM`, `ENABLE_FRONT_WALL_RESYNC`, `RESYNC_*`, `TOF_MEASUREMENT_LATENCY_MS` | 5.4 |
 | `WALL_*`, `ENABLE_TOF_WALL_CENTERING`, `MAZESOLVER_COMPILE_TOF_WALL_CENTERING` | 6 |
 | periods, watchdog, UX/RGB/button constants | 7 |
 | unused: `MAX_TURN_RATE_DEG_S`, `WHEEL_TRACK_MM` | never |
